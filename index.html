@@ -1,53 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Membership Admin Panel</title>
-  <script src="https://apis.google.com/js/api.js" async defer></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
-    th, td { padding: 8px; border: 1px solid #ccc; }
-    th { background-color: #f4f4f4; }
-    #login-box { border: 1px solid #ccc; padding: 1rem; max-width: 300px; margin: 2rem auto; }
-    #error { color: red; }
-    #authorize-btn { margin-bottom: 1rem; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    #app, #login-box {
+      margin-top: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    #logout-btn {
+      float: right;
+    }
+    #error {
+      color: red;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>Membership Admin Panel</h1>
+  <h1>
+    Membership Admin Panel
+    <button id="logout-btn" style="display: none;">Logout</button>
+  </h1>
 
-  <!-- OAuth button -->
-  <button id="authorize-btn">Authorize with Google</button>
+  <button id="authorize-btn" disabled>Authorize with Google</button>
 
-  <!-- Login Box -->
-  <div id="login-box" style="display:none;">
-    <h3>Admin Login</h3>
-    <input type="text" id="login-username" placeholder="Username"><br><br>
-    <input type="password" id="login-password" placeholder="Password"><br><br>
+  <div id="login-box" style="display: none;">
+    <h2>Login</h2>
+    <input id="login-username" placeholder="Username" />
+    <input id="login-password" placeholder="Password" type="password" />
     <button id="login-button">Login</button>
     <div id="error"></div>
   </div>
 
-  <!-- Main App -->
-  <div id="app" style="display:none;">
+  <div id="app" style="display: none;">
     <h2>User List</h2>
-    <table id="user-table">
+    <table>
       <thead>
         <tr>
           <th>ID</th>
           <th>Username</th>
           <th>Password</th>
-          <th>Role</th>
+          <th>Created At</th>
         </tr>
       </thead>
       <tbody id="user-body">
-        <tr><td colspan="4">Waiting for login...</td></tr>
+        <tr><td colspan="4">Loading...</td></tr>
       </tbody>
     </table>
   </div>
 
+  <!-- Load Google API -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+
+  <!-- Config + App -->
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
