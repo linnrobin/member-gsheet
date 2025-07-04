@@ -19,7 +19,7 @@ export function initAuth(onReady) {
 
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CONFIG.CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+        scope: 'https://www.googleapis.com/auth/spreadsheets',
         callback: '', // Filled during authorize()
       });
       gisInited = true;
@@ -40,7 +40,7 @@ export function initAuth(onReady) {
 export function authorize(callback) {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
     callback: (response) => {
       if (response.access_token) {
         saveToken(response.access_token);
