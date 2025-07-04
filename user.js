@@ -25,21 +25,19 @@ export async function appendUser(user) {
   });
 }
 
-export async function updateUser(rowIndex, user) {
-  const now = new Date().toISOString();
-  const values = [[
-    user.username,
-    user.password,
-    user.role,
-    user.created_at || now,
-    now
-  ]];
-  const range = `Sheet1!A${rowIndex + 2}:E${rowIndex + 2}`;
-  await gapi.client.sheets.spreadsheets.values.update({
+export async function updateUser(index, { username, password, role, created_at }) {
+  const updated_at = new Date().toISOString();
+  const values = [[username, password, role, created_at, updated_at]];
+  const rowNum = index + 2; // Add 2 because data starts at row 2 in sheet
+
+  const range = `Sheet1!A${rowNum}:E${rowNum}`;
+  return await gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId: CONFIG.USERS_SHEET_ID,
     range,
     valueInputOption: 'RAW',
-    resource: { values },
+    resource: {
+      values,
+    },
   });
 }
 
