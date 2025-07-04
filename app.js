@@ -31,8 +31,13 @@ document.getElementById('login-button').onclick = async () => {
       spreadsheetId: CONFIG.ADMINS_SHEET_ID,
       range: CONFIG.ADMINS_RANGE,
     });
+
     const rows = res.result.values || [];
-    const match = rows.find(row => row[0]?.trim() === username && row[1]?.trim() === password);
+
+    // ✅ Use correct columns: Username (1), Password (2)
+    const match = rows.find(row =>
+      row[1]?.trim() === username && row[2]?.trim() === password
+    );
 
     if (match) {
       document.getElementById('login-box').style.display = 'none';
@@ -42,6 +47,7 @@ document.getElementById('login-button').onclick = async () => {
       const users = await fetchUsers();
       const tbody = document.getElementById('user-body');
       tbody.innerHTML = '';
+
       users.forEach(row => {
         const tr = document.createElement('tr');
         for (let i = 0; i < 4; i++) {
@@ -51,9 +57,11 @@ document.getElementById('login-button').onclick = async () => {
         }
         tbody.appendChild(tr);
       });
+
     } else {
       errorBox.textContent = 'Invalid username or password.';
     }
+
   } catch (err) {
     console.error('Login error:', err);
     errorBox.textContent = 'Login error: ' + (err.message || JSON.stringify(err));
@@ -63,10 +71,12 @@ document.getElementById('login-button').onclick = async () => {
 document.getElementById('logout-btn').onclick = () => {
   logout(tokenClient);
   isAuthorized = false;
+
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('authorize-btn').style.display = 'inline-block';
   document.getElementById('logout-btn').style.display = 'none';
+
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
 };
