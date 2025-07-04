@@ -1,4 +1,3 @@
-// app.js
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
@@ -35,18 +34,20 @@ async function handleLogin() {
     });
 
     const rows = res.result.values || [];
-    const found = rows.find(row =>
+    const match = rows.find(row =>
       row[0]?.trim() === username && row[1]?.trim() === password
     );
 
-    if (found) {
+    if (match) {
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app').style.display = 'block';
     } else {
       errorBox.textContent = 'Invalid username or password.';
     }
   } catch (err) {
-    errorBox.textContent = 'Login error: ' + err.message;
+    console.error('Login error:', err);
+    document.getElementById('error').textContent =
+      'Login error: ' + (err.message || JSON.stringify(err));
   }
 }
 
