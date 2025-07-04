@@ -2,33 +2,49 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Membership Manager</title>
+  <title>Membership Manager (Login Protected)</title>
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    table { border-collapse: collapse; width: 100%; }
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
     th, td { padding: 8px; border: 1px solid #ccc; }
     th { background-color: #f4f4f4; }
+    #login-box { border: 1px solid #ccc; padding: 1rem; max-width: 300px; margin: 2rem auto; }
+    #error { color: red; }
   </style>
 </head>
 <body>
-  <h1>Membership Manager</h1>
-  <button id="authorize-btn">Authorize with Google</button>
+  <h1>Membership Admin Panel</h1>
 
-  <h2>User List</h2>
-  <table id="user-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Password</th>
-        <th>Role</th>
-      </tr>
-    </thead>
-    <tbody id="user-body">
-      <tr><td colspan="4">Loading...</td></tr>
-    </tbody>
-  </table>
+  <!-- Login Box -->
+  <div id="login-box">
+    <h3>Admin Login</h3>
+    <input type="text" id="login-username" placeholder="Username"><br><br>
+    <input type="password" id="login-password" placeholder="Password"><br><br>
+    <button id="login-button">Login</button>
+    <div id="error"></div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app" style="display:none;">
+    <button id="authorize-btn">Connect to Google</button>
+
+    <h2>User List</h2>
+    <table id="user-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody id="user-body">
+        <tr><td colspan="4">Waiting for authorization...</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
