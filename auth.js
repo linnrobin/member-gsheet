@@ -29,8 +29,15 @@ export function authorize(callback) {
 }
 
 export function logout(tokenClient) {
-  if (tokenClient) {
-    google.accounts.oauth2.revoke(tokenClient.access_token);
-    console.log('[auth.js] Token revoked.');
+  const token = gapi.client.getToken()?.access_token;
+
+  console.log('[auth.js] Attempting to revoke token:', token);
+
+  if (token) {
+    google.accounts.oauth2.revoke(token, () => {
+      console.log('[auth.js] Token revoked successfully.');
+    });
+  } else {
+    console.warn('[auth.js] No token available to revoke.');
   }
 }
