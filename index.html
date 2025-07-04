@@ -2,19 +2,22 @@
 <html>
 <head>
   <title>Google Sheets API with OAuth</title>
+  <meta charset="UTF-8" />
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <h1>Google Sheets API + OAuth</h1>
+  <h1>Google Sheets API + OAuth (GitHub Pages)</h1>
   <button id="authorize-btn">Authorize and Fetch Data</button>
-  <pre id="output">Waiting...</pre>
+  <pre id="output">Waiting for authorization...</pre>
 
+  <!-- Load secrets from config.js -->
+  <script src="config.js"></script>
   <script>
-    const CLIENT_ID = '777842538509-b30eqog08ovtacuqvdh7g4oe8ej2c7k0.apps.googleusercontent.com';
-    const API_KEY = ''; // Not required unless you have a quota issue
-    const SHEET_ID = '1bVnJwShGvmGR5W5NZ3vBSeKFhlWuzC8ej13lY3kldSY';
-    const RANGE = 'Sheet1!A1:D10';
+    const CLIENT_ID = CONFIG.CLIENT_ID;
+    const API_KEY = CONFIG.API_KEY;
+    const SHEET_ID = CONFIG.SHEET_ID;
+    const RANGE = CONFIG.RANGE;
     const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
@@ -33,3 +36,51 @@
         gapiInited = true;
         console.log("GAPI client initialized.");
       });
+    }
+
+    // Setup after window loads
+    window.onload = () => {
+      gapiLoaded();
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: async (tokenResponse) => {
+          if (tokenResponse.error) {
+            document.getElementById('output').innerText = 'OAuth Error: ' + tokenResponse.error;
+            return;
+          }
+          await fetchSheetData();
+        },
+      });
+    };
+
+    function handleAuthClick() {
+      if (!gapiInited) {
+        document.getElementById('output').innerText = 'Google API not yet initialized.';
+        return;
+      }
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+
+    async function fetchSheetData() {
+      try {
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: RANGE,
+        });
+
+        const rows = response.result.values;
+        if (!rows || rows.length === 0) {
+          document.getElementById('output').innerText = 'No data found in sheet.';
+          return;
+        }
+
+        const formatted = rows.map(row => row.join(' | ')).join('\n');
+        document.getElementById('output').innerText = formatted;
+      } catch (err) {
+        document.getElementById('output').innerText = 'Error fetching data:\n' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
