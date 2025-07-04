@@ -102,11 +102,14 @@ document.getElementById('logout-btn').onclick = () => {
   logout(tokenClient);
   isAuthorized = false;
 
+  // Hide app, show login form
   document.getElementById('app').style.display = 'none';
-  document.getElementById('login-box').style.display = 'none';
-  document.getElementById('authorize-btn').style.display = 'inline-block';
+  document.getElementById('login-box').style.display = 'block';
+  document.getElementById('authorize-btn').style.display = 'none';
   document.getElementById('logout-btn').style.display = 'none';
 
+  // Clear form values
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
 };
+
