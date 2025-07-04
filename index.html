@@ -1,86 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Google Sheets API with OAuth</title>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <title>Membership Manager</title>
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 8px; border: 1px solid #ccc; }
+    th { background-color: #f4f4f4; }
+  </style>
 </head>
 <body>
-  <h1>Google Sheets API + OAuth (GitHub Pages)</h1>
-  <button id="authorize-btn">Authorize and Fetch Data</button>
-  <pre id="output">Waiting for authorization...</pre>
+  <h1>Membership Manager</h1>
+  <button id="authorize-btn">Authorize with Google</button>
 
-  <!-- Load secrets from config.js -->
+  <h2>User List</h2>
+  <table id="user-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Password</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody id="user-body">
+      <tr><td colspan="4">Loading...</td></tr>
+    </tbody>
+  </table>
+
   <script src="config.js"></script>
-  <script>
-    const CLIENT_ID = CONFIG.CLIENT_ID;
-    const API_KEY = CONFIG.API_KEY;
-    const SHEET_ID = CONFIG.SHEET_ID;
-    const RANGE = CONFIG.RANGE;
-    const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
-
-    let tokenClient;
-    let gapiInited = false;
-
-    document.getElementById('authorize-btn').onclick = handleAuthClick;
-
-    // Load the Google API client
-    function gapiLoaded() {
-      gapi.load('client', async () => {
-        await gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: [DISCOVERY_DOC],
-        });
-        gapiInited = true;
-        console.log("GAPI client initialized.");
-      });
-    }
-
-    // Setup after window loads
-    window.onload = () => {
-      gapiLoaded();
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: async (tokenResponse) => {
-          if (tokenResponse.error) {
-            document.getElementById('output').innerText = 'OAuth Error: ' + tokenResponse.error;
-            return;
-          }
-          await fetchSheetData();
-        },
-      });
-    };
-
-    function handleAuthClick() {
-      if (!gapiInited) {
-        document.getElementById('output').innerText = 'Google API not yet initialized.';
-        return;
-      }
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-    async function fetchSheetData() {
-      try {
-        const response = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: SHEET_ID,
-          range: RANGE,
-        });
-
-        const rows = response.result.values;
-        if (!rows || rows.length === 0) {
-          document.getElementById('output').innerText = 'No data found in sheet.';
-          return;
-        }
-
-        const formatted = rows.map(row => row.join(' | ')).join('\n');
-        document.getElementById('output').innerText = formatted;
-      } catch (err) {
-        document.getElementById('output').innerText = 'Error fetching data:\n' + err.message;
-      }
-    }
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
