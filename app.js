@@ -6,22 +6,23 @@ let tokenClient;
 let isAuthorized = false;
 
 window.onload = () => {
+  console.log('[app.js] Window loaded. Initializing auth...');
   initAuth(() => {
-    console.log('Auth initialized. Enabling authorize button.');
+    console.log('[app.js] initAuth callback triggered. Enabling button.');
     document.getElementById('authorize-btn').disabled = false;
   });
 };
 
 document.getElementById('authorize-btn').onclick = () => {
-  console.log('Authorize clicked');
+  console.log('[app.js] Authorize button clicked');
   tokenClient = authorize((tokenResponse) => {
-    console.log('Token response:', tokenResponse);
+    console.log('[app.js] Token response:', tokenResponse);
     if (!tokenResponse.error) {
       isAuthorized = true;
       document.getElementById('authorize-btn').style.display = 'none';
       document.getElementById('login-box').style.display = 'block';
     } else {
-      console.error('Authorization error:', tokenResponse);
+      console.error('[app.js] Authorization error:', tokenResponse);
     }
   });
 };
@@ -31,7 +32,7 @@ document.getElementById('login-button').onclick = async () => {
   const password = document.getElementById('login-password').value.trim();
   const errorBox = document.getElementById('error');
 
-  console.log(`Attempting login with username: ${username}`);
+  console.log(`[app.js] Attempting login with username: ${username}`);
 
   try {
     const res = await gapi.client.sheets.spreadsheets.values.get({
@@ -39,7 +40,7 @@ document.getElementById('login-button').onclick = async () => {
       range: CONFIG.ADMINS_RANGE,
     });
 
-    console.log('Admin sheet data:', res);
+    console.log('[app.js] Admin sheet data:', res);
 
     const rows = res.result.values || [];
 
@@ -48,13 +49,13 @@ document.getElementById('login-button').onclick = async () => {
     );
 
     if (match) {
-      console.log('Login successful. Loading user data...');
+      console.log('[app.js] Login successful. Loading user data...');
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       document.getElementById('logout-btn').style.display = 'inline-block';
 
       const users = await fetchUsers();
-      console.log('Fetched users:', users);
+      console.log('[app.js] Fetched users:', users);
 
       const tbody = document.getElementById('user-body');
       tbody.innerHTML = '';
@@ -70,18 +71,18 @@ document.getElementById('login-button').onclick = async () => {
       });
 
     } else {
-      console.warn('Login failed: Invalid username or password.');
+      console.warn('[app.js] Login failed: Invalid username or password.');
       errorBox.textContent = 'Invalid username or password.';
     }
 
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('[app.js] Login error:', err);
     errorBox.textContent = 'Login error: ' + (err.message || JSON.stringify(err));
   }
 };
 
 document.getElementById('logout-btn').onclick = () => {
-  console.log('Logout triggered');
+  console.log('[app.js] Logout triggered');
   logout(tokenClient);
   isAuthorized = false;
 
