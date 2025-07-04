@@ -1,43 +1,92 @@
 import { CONFIG } from './config.js';
 
+let gapiInited = false;
+let gisInited = false;
+let tokenClient;
+
+/**
+ * Initializes the Google API client and sets up auth callback.
+ */
 export function initAuth(onReady) {
-  console.log('[auth.js] Loading gapi...');
   gapi.load('client', async () => {
-    try {
-      console.log('[auth.js] Initializing gapi client...');
-      await gapi.client.init({
-        apiKey: '',
-        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-      });
-      console.log('[auth.js] GAPI client initialized.');
-      onReady();
-    } catch (error) {
-      console.error('[auth.js] Error initializing gapi client:', error);
-    }
+    await gapi.client.init({
+      apiKey: '', // Not needed when using OAuth 2.0
+      discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+    });
+    gapiInited = true;
+    maybeEnableButton(onReady);
   });
+
+  window.onload = () => {
+    google.accounts.oauth2.initTokenClient({
+      client_id: CONFIG.CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+      callback: '', // Set in authorize()
+    });
+    gisInited = true;
+    maybeEnableButton(onReady);
+  };
 }
 
+/**
+ * Calls the token client to start OAuth flow.
+ */
 export function authorize(callback) {
-  const tokenClient = google.accounts.oauth2.initTokenClient({
+  tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-    callback: callback,
+    callback: (response) => {
+      if (response.access_token) {
+        saveToken(response.access_token);
+      }
+      callback(response);
+    },
   });
 
   tokenClient.requestAccessToken();
   return tokenClient;
 }
 
+/**
+ * Logs the user out and revokes the access token.
+ */
 export function logout(tokenClient) {
   const token = gapi.client.getToken()?.access_token;
-
   console.log('[auth.js] Attempting to revoke token:', token);
 
   if (token) {
     google.accounts.oauth2.revoke(token, () => {
-      console.log('[auth.js] Token revoked successfully.');
+      console.log('[auth.js] Token revoked.');
     });
   } else {
-    console.warn('[auth.js] No token available to revoke.');
+    console.warn('[auth.js] No token to revoke.');
   }
+
+  clearToken();
+}
+
+/**
+ * Stores the token in sessionStorage.
+ */
+export function saveToken(token) {
+  sessionStorage.setItem('access_token', token);
+}
+
+/**
+ * Retrieves token from sessionStorage.
+ */
+export function getSavedToken() {
+  return sessionStorage.getItem('access_token');
+}
+
+/**
+ * Clears token and username from sessionStorage.
+ */
+export function clearToken() {
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('username');
+}
+
+function maybeEnableButton(callback) {
+  if (gapiInited && gisInited && callback) callback();
 }
