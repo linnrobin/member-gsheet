@@ -26,16 +26,28 @@
     <table border="1" cellpadding="5">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Username</th>
           <th>Password</th>
           <th>Role</th>
+          <th>Created At</th>
+          <th>Updated At</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="user-body">
-        <tr><td colspan="4">Loading...</td></tr>
+        <tr><td colspan="6">Loading...</td></tr>
       </tbody>
     </table>
+
+    <h3>Add / Update User</h3>
+    <div id="user-form">
+      <input id="user-index" type="hidden" />
+      <input id="user-username" placeholder="Username" />
+      <input id="user-password" placeholder="Password" />
+      <input id="user-role" placeholder="Role" />
+      <button id="save-user-btn">Save</button>
+      <button id="clear-user-btn">Clear</button>
+    </div>
   </div>
 
   <script src="https://apis.google.com/js/api.js"></script>
