@@ -1,88 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Google Sheets API OAuth Example</title>
+  <title>Google Sheets API with OAuth</title>
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <h1>Read Google Sheet with OAuth Test</h1>
-  <button onclick="handleAuthClick()">Authorize</button>
-  <button onclick="handleSignoutClick()">Sign Out</button>
-  <pre id="content"></pre>
+  <h1>Google Sheets API + OAuth</h1>
+  <button id="authorize-btn">Authorize and Fetch Data</button>
+  <pre id="output">Waiting...</pre>
 
   <script>
     const CLIENT_ID = '777842538509-b30eqog08ovtacuqvdh7g4oe8ej2c7k0.apps.googleusercontent.com';
-    const API_KEY = 'YOUR_API_KEY'; // Optional unless you want to use API key
-
+    const API_KEY = ''; // Not required unless you have a quota issue
+    const SHEET_ID = '1bVnJwShGvmGR5W5NZ3vBSeKFhlWuzC8ej13lY3kldSY';
+    const RANGE = 'Sheet1!A1:D10';
     const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
     let tokenClient;
     let gapiInited = false;
-    let gisInited = false;
 
-    document.addEventListener("DOMContentLoaded", () => {
-      gapi.load('client', initializeGapiClient);
-    });
+    document.getElementById('authorize-btn').onclick = handleAuthClick;
 
-    function initializeGapiClient() {
-      gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: [DISCOVERY_DOC],
-      }).then(() => {
+    // Load the Google API client
+    function gapiLoaded() {
+      gapi.load('client', async () => {
+        await gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: [DISCOVERY_DOC],
+        });
         gapiInited = true;
+        console.log("GAPI client initialized.");
       });
-    }
-
-    window.onload = () => {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: '', // will be set on request
-      });
-    };
-
-    function handleAuthClick() {
-      tokenClient.callback = async (resp) => {
-        if (resp.error) throw resp;
-        await listSheetData();
-      };
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-    function handleSignoutClick() {
-      google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
-        gapi.client.setToken('');
-        document.getElementById('content').innerText = 'Logged out.';
-      });
-    }
-
-    async function listSheetData() {
-      const spreadsheetId = '1bVnJwShGvmGR5W5NZ3vBSeKFhlWuzC8ej13lY3kldSY';
-      const range = 'Sheet1!A1:D10';
-
-      try {
-        const response = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range,
-        });
-
-        const rows = response.result.values;
-        if (!rows || rows.length === 0) {
-          document.getElementById('content').innerText = 'No data found.';
-          return;
-        }
-
-        let output = '';
-        rows.forEach((row) => {
-          output += row.join(', ') + '\n';
-        });
-        document.getElementById('content').innerText = output;
-      } catch (err) {
-        document.getElementById('content').innerText = `Error: ${err.message}`;
-      }
-    }
-  </script>
-</body>
-</html>
