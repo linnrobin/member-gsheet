@@ -12,32 +12,26 @@ export function initAuth(onReady) {
     console.log('[auth.js] gapi loaded. Initializing client...');
     try {
       await gapi.client.init({
-        // You can omit apiKey here since you're using OAuth, or put a dummy if needed
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
       });
       gapiInited = true;
       console.log('[auth.js] gapi client initialized.');
-      maybeEnableButton(onReady);
-    } catch (err) {
-      console.error('[auth.js] Error during gapi.client.init:', err);
-    }
-  });
 
-  window.onload = () => {
-    try {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CONFIG.CLIENT_ID,
         scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-        callback: '', // Filled in authorize()
+        callback: '', // Filled during authorize()
       });
       gisInited = true;
       console.log('[auth.js] Google Identity Services initialized.');
+
       maybeEnableButton(onReady);
     } catch (err) {
-      console.error('[auth.js] Error during GIS init:', err);
+      console.error('[auth.js] Error during gapi or GIS init:', err);
     }
-  };
+  });
 }
+
 
 
 /**
