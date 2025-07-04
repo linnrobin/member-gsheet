@@ -1,15 +1,47 @@
 import { CONFIG } from './config.js';
-import { initAuth, authorize, logout } from './auth.js';
+import { initAuth, authorize, logout, saveToken, getSavedToken, clearToken } from './auth.js';
 import { fetchUsers } from './user.js';
 
 let tokenClient;
 let isAuthorized = false;
 
+function showApp(username) {
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('logout-btn').style.display = 'inline-block';
+
+  fetchUsers().then(users => {
+    console.log('[app.js] Fetched users:', users);
+    const tbody = document.getElementById('user-body');
+    tbody.innerHTML = '';
+    users.forEach(row => {
+      const tr = document.createElement('tr');
+      for (let i = 0; i < 4; i++) {
+        const td = document.createElement('td');
+        td.textContent = row[i] || '';
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+  });
+}
+
 window.onload = () => {
   console.log('[app.js] Window loaded. Initializing auth...');
   initAuth(() => {
-    console.log('[app.js] initAuth callback triggered. Enabling button.');
-    document.getElementById('authorize-btn').disabled = false;
+    console.log('[app.js] initAuth callback triggered. Checking saved session.');
+
+    const savedToken = getSavedToken();
+    const savedUser = sessionStorage.getItem('username');
+
+    if (savedToken && savedUser) {
+      console.log('[app.js] Found saved session. Auto-logging in...');
+      gapi.client.setToken({ access_token: savedToken });
+      isAuthorized = true;
+      showApp(savedUser);
+    } else {
+      document.getElementById('authorize-btn').disabled = false;
+    }
   });
 };
 
@@ -40,36 +72,16 @@ document.getElementById('login-button').onclick = async () => {
       range: CONFIG.ADMINS_RANGE,
     });
 
-    console.log('[app.js] Admin sheet data:', res);
-
     const rows = res.result.values || [];
-
     const match = rows.find(row =>
       row[1]?.trim() === username && row[2]?.trim() === password
     );
 
     if (match) {
       console.log('[app.js] Login successful. Loading user data...');
-      document.getElementById('login-box').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      document.getElementById('logout-btn').style.display = 'inline-block';
-
-      const users = await fetchUsers();
-      console.log('[app.js] Fetched users:', users);
-
-      const tbody = document.getElementById('user-body');
-      tbody.innerHTML = '';
-
-      users.forEach(row => {
-        const tr = document.createElement('tr');
-        for (let i = 0; i < 4; i++) {
-          const td = document.createElement('td');
-          td.textContent = row[i] || '';
-          tr.appendChild(td);
-        }
-        tbody.appendChild(tr);
-      });
-
+      saveToken(gapi.client.getToken().access_token);
+      sessionStorage.setItem('username', username);
+      showApp(username);
     } else {
       console.warn('[app.js] Login failed: Invalid username or password.');
       errorBox.textContent = 'Invalid username or password.';
