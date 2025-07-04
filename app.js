@@ -3,14 +3,30 @@ const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
 let tokenClient;
 let gapiInited = false;
+let isAuthorized = false;
+
+document.getElementById('authorize-btn').onclick = () => {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.CLIENT_ID,
+    scope: SCOPES,
+    callback: (tokenResponse) => {
+      if (tokenResponse.error) {
+        alert('OAuth error: ' + tokenResponse.error);
+        return;
+      }
+      isAuthorized = true;
+      document.getElementById('authorize-btn').style.display = 'none';
+      document.getElementById('login-box').style.display = 'block';
+    }
+  });
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+};
 
 document.getElementById('login-button').onclick = handleLogin;
-document.getElementById('authorize-btn').onclick = handleAuthClick;
 
 window.onload = () => {
   gapi.load('client', async () => {
     await gapi.client.init({
-      apiKey: CONFIG.API_KEY,
       discoveryDocs: [DISCOVERY_DOC],
     });
     gapiInited = true;
@@ -21,6 +37,11 @@ async function handleLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
   const errorBox = document.getElementById('error');
+
+  if (!isAuthorized) {
+    errorBox.textContent = 'Please click "Authorize with Google" first.';
+    return;
+  }
 
   if (!username || !password) {
     errorBox.textContent = 'Please enter both fields.';
@@ -41,35 +62,14 @@ async function handleLogin() {
     if (match) {
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+      await fetchUsers();
     } else {
       errorBox.textContent = 'Invalid username or password.';
     }
   } catch (err) {
     console.error('Login error:', err);
-    document.getElementById('error').textContent =
-      'Login error: ' + (err.message || JSON.stringify(err));
+    errorBox.textContent = 'Login error: ' + (err.message || JSON.stringify(err));
   }
-}
-
-function handleAuthClick() {
-  if (!gapiInited) {
-    alert("Google API not ready");
-    return;
-  }
-
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CONFIG.CLIENT_ID,
-    scope: SCOPES,
-    callback: async (tokenResponse) => {
-      if (tokenResponse.error) {
-        alert('OAuth Error: ' + tokenResponse.error);
-        return;
-      }
-      await fetchUsers();
-    }
-  });
-
-  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 async function fetchUsers() {
