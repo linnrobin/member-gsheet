@@ -33,10 +33,11 @@ document.getElementById('login-button').onclick = async () => {
     });
 
     const rows = res.result.values || [];
+    console.log('Admin rows:', rows);
 
-    // ✅ Use correct columns: Username (1), Password (2)
     const match = rows.find(row =>
-      row[1]?.trim() === username && row[2]?.trim() === password
+      row[1]?.toString().trim() === username &&
+      row[2]?.toString().trim() === password
     );
 
     if (match) {
@@ -57,11 +58,9 @@ document.getElementById('login-button').onclick = async () => {
         }
         tbody.appendChild(tr);
       });
-
     } else {
       errorBox.textContent = 'Invalid username or password.';
     }
-
   } catch (err) {
     console.error('Login error:', err);
     errorBox.textContent = 'Login error: ' + (err.message || JSON.stringify(err));
