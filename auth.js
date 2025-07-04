@@ -1,44 +1,36 @@
 import { CONFIG } from './config.js';
 
-let tokenClient;
-let gapiInited = false;
-let gisInited = false;
-
-window.initGapi = () => {
-  gapi.load('client', async () => {
-    await gapi.client.init({
-      apiKey: '',
-      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-    });
-    gapiInited = true;
-  });
-};
-
 export function initAuth(onReady) {
-  window.onload = () => {
-    google.accounts.oauth2.initTokenClient({
-      client_id: CONFIG.CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-      callback: '', // defined later
-    });
-    onReady();
-  };
+  console.log('[auth.js] Loading gapi...');
+  gapi.load('client', async () => {
+    try {
+      console.log('[auth.js] Initializing gapi client...');
+      await gapi.client.init({
+        apiKey: '',
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      });
+      console.log('[auth.js] GAPI client initialized.');
+      onReady();
+    } catch (error) {
+      console.error('[auth.js] Error initializing gapi client:', error);
+    }
+  });
 }
 
 export function authorize(callback) {
-  tokenClient = google.accounts.oauth2.initTokenClient({
+  const tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CONFIG.CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-    callback: (response) => callback(response)
+    callback: callback,
   });
+
   tokenClient.requestAccessToken();
   return tokenClient;
 }
 
 export function logout(tokenClient) {
   if (tokenClient) {
-    google.accounts.oauth2.revoke(tokenClient.credentials.access_token, () => {
-      console.log("Logged out");
-    });
+    google.accounts.oauth2.revoke(tokenClient.access_token);
+    console.log('[auth.js] Token revoked.');
   }
 }
