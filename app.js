@@ -73,6 +73,7 @@ async function handleLogin() {
     if (match) {
       document.getElementById('login-box').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+      document.getElementById('logout-btn').style.display = 'inline-block'; // 👈 show logout
       await fetchUsers();
     } else {
       errorBox.textContent = 'Invalid username or password.';
@@ -115,3 +116,28 @@ async function fetchUsers() {
       `<tr><td colspan="4">Error: ${msg}</td></tr>`;
   }
 }
+
+// ✅ Logout handler
+document.getElementById('logout-btn').onclick = () => {
+  if (!tokenClient || !tokenClient.credentials) {
+    console.warn('Logout: No token to revoke');
+    return;
+  }
+
+  const token = tokenClient.credentials.access_token;
+  google.accounts.oauth2.revoke(token, () => {
+    console.log('🔒 Logged out and token revoked');
+
+    isAuthorized = false;
+
+    // Hide UI
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('authorize-btn').style.display = 'inline-block';
+    document.getElementById('logout-btn').style.display = 'none';
+
+    // Clear login fields
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+  });
+};
