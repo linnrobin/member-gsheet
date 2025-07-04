@@ -1,51 +1,81 @@
 // app.js
-const CLIENT_ID = CONFIG.CLIENT_ID;
-const API_KEY = CONFIG.API_KEY;
-const SHEET_ID = CONFIG.SHEET_ID;
-const SHEET_RANGE = CONFIG.RANGE;
 const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
 let tokenClient;
 let gapiInited = false;
 
+document.getElementById('login-button').onclick = handleLogin;
 document.getElementById('authorize-btn').onclick = handleAuthClick;
 
 window.onload = () => {
   gapi.load('client', async () => {
     await gapi.client.init({
-      apiKey: API_KEY,
+      apiKey: CONFIG.API_KEY,
       discoveryDocs: [DISCOVERY_DOC],
     });
     gapiInited = true;
-
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: async (tokenResponse) => {
-        if (tokenResponse.error) {
-          alert('OAuth error: ' + tokenResponse.error);
-          return;
-        }
-        await fetchUsers();
-      },
-    });
   });
 };
 
-function handleAuthClick() {
-  if (!gapiInited) {
-    alert("GAPI not loaded yet.");
+async function handleLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  const errorBox = document.getElementById('error');
+
+  if (!username || !password) {
+    errorBox.textContent = 'Please enter both fields.';
     return;
   }
+
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+    });
+
+    const rows = res.result.values || [];
+    const found = rows.find(row =>
+      row[0]?.trim() === username && row[1]?.trim() === password
+    );
+
+    if (found) {
+      document.getElementById('login-box').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    } else {
+      errorBox.textContent = 'Invalid username or password.';
+    }
+  } catch (err) {
+    errorBox.textContent = 'Login error: ' + err.message;
+  }
+}
+
+function handleAuthClick() {
+  if (!gapiInited) {
+    alert("Google API not ready");
+    return;
+  }
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.CLIENT_ID,
+    scope: SCOPES,
+    callback: async (tokenResponse) => {
+      if (tokenResponse.error) {
+        alert('OAuth Error: ' + tokenResponse.error);
+        return;
+      }
+      await fetchUsers();
+    }
+  });
+
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 async function fetchUsers() {
   try {
     const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: SHEET_RANGE,
+      spreadsheetId: CONFIG.USERS_SHEET_ID,
+      range: CONFIG.USERS_RANGE,
     });
 
     const users = res.result.values || [];
