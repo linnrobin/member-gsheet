@@ -1,6 +1,18 @@
 import { CONFIG } from './config.js';
-import { initAuth, authorize, logout, saveToken, getSavedToken, clearToken } from './auth.js';
-import { fetchUsers, appendUser, updateUser, deleteUserAt } from './user.js';
+import {
+  initAuth,
+  authorize,
+  logout,
+  saveToken,
+  getSavedToken,
+  clearToken
+} from './auth.js';
+import {
+  fetchUsers,
+  appendUser,
+  updateUser,
+  deleteUserAt
+} from './user.js';
 
 let tokenClient;
 let isAuthorized = false;
@@ -13,34 +25,36 @@ function showApp() {
   fetchUsers().then(users => {
     console.log('[app.js] Fetched users:', users);
     const tbody = document.getElementById('user-body');
-    tbody.innerHTML = '';
+    tbody.replaceChildren(); // Clear safely
 
-    users.forEach((row, index) => {
-      const tr = document.createElement('tr');
-      for (let i = 0; i < 5; i++) {
-        const td = document.createElement('td');
-        td.textContent = row[i] || '';
-        tr.appendChild(td);
-      }
-
-      const actions = document.createElement('td');
-      const editBtn = document.createElement('button');
-      editBtn.textContent = 'Edit';
-      editBtn.onclick = () => populateForm(row, index);
-
-      const delBtn = document.createElement('button');
-      delBtn.textContent = 'Delete';
-      delBtn.onclick = async () => {
-        if (confirm('Delete user?')) {
-          await deleteUserAt(index);
-          showApp();
+    users
+      .filter(row => row.length >= 3 && row[0]) // Filter empty/invalid rows
+      .forEach((row, index) => {
+        const tr = document.createElement('tr');
+        for (let i = 0; i < 5; i++) {
+          const td = document.createElement('td');
+          td.textContent = row[i] || '';
+          tr.appendChild(td);
         }
-      };
 
-      actions.append(editBtn, delBtn);
-      tr.appendChild(actions);
-      tbody.appendChild(tr);
-    });
+        const actions = document.createElement('td');
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = () => populateForm(row, index);
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = async () => {
+          if (confirm('Delete user?')) {
+            await deleteUserAt(index);
+            showApp();
+          }
+        };
+
+        actions.append(editBtn, delBtn);
+        tr.appendChild(actions);
+        tbody.appendChild(tr);
+      });
   });
 }
 
@@ -124,7 +138,9 @@ document.getElementById('login-button').onclick = async () => {
     });
 
     const rows = res.result.values || [];
-    const match = rows.find(row => row[1]?.trim() === username && row[2]?.trim() === password);
+    const match = rows.find(row =>
+      row[1]?.trim() === username && row[2]?.trim() === password
+    );
 
     if (match) {
       saveToken(gapi.client.getToken().access_token);
