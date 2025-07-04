@@ -35,13 +35,17 @@ window.onload = () => {
     const savedUser = sessionStorage.getItem('username');
 
     if (savedToken && savedUser) {
-      console.log('[app.js] Found saved session. Auto-logging in...');
-      gapi.client.setToken({ access_token: savedToken });
-      isAuthorized = true;
-      showApp(savedUser);
-    } else {
-      document.getElementById('authorize-btn').disabled = false;
-    }
+  console.log('[app.js] Found saved session. Setting token...');
+  gapi.client.setToken({ access_token: savedToken });
+
+  isAuthorized = true;
+  document.getElementById('authorize-btn').style.display = 'none';
+  showApp(savedUser);
+} else {
+  console.log('[app.js] No saved session. Showing authorize button.');
+  document.getElementById('authorize-btn').style.display = 'inline-block';
+  document.getElementById('authorize-btn').disabled = false;
+}
   });
 };
 
