@@ -1,88 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Google Sheets API OAuth Example</title>
-  <script src="https://apis.google.com/js/api.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <meta charset="UTF-8">
+  <title>Membership Admin Panel</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<<<<<<< HEAD
   <h1>Read Google Sheet with OAuth222</h1>
   <button onclick="handleAuthClick()">Authorize</button>
   <button onclick="handleSignoutClick()">Sign Out</button>
   <pre id="content"></pre>
+=======
+  <h1>
+    Membership Admin Panel
+    <button id="logout-btn" style="display: none; float: right;">Logout</button>
+  </h1>
+>>>>>>> a92c1405cf78cabbbf8dbf86cbd2fa9949ccecb2
 
-  <script>
-    const CLIENT_ID = '777842538509-b30eqog08ovtacuqvdh7g4oe8ej2c7k0.apps.googleusercontent.com';
-    const API_KEY = 'YOUR_API_KEY'; // Optional unless you want to use API key
+  <button id="authorize-btn" disabled>Authorize with Google</button>
 
-    const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+  <div id="login-box" style="display: none;">
+    <h2>Login</h2>
+    <input id="login-username" placeholder="Username" />
+    <input id="login-password" placeholder="Password" type="password" />
+    <button id="login-button">Login</button>
+    <div id="error" style="color:red;"></div>
+  </div>
 
-    let tokenClient;
-    let gapiInited = false;
-    let gisInited = false;
+  <div id="app" style="display: none;">
+    <h2>User List</h2>
+    <table border="1" cellpadding="5">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Role</th>
+          <th>Created At</th>
+          <th>Updated At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="user-body">
+        <tr><td colspan="6">Loading...</td></tr>
+      </tbody>
+    </table>
 
-    document.addEventListener("DOMContentLoaded", () => {
-      gapi.load('client', initializeGapiClient);
-    });
+    <h3>Add / Update User</h3>
+    <div id="user-form">
+      <input id="user-index" type="hidden" />
+      <input id="user-username" placeholder="Username" />
+      <input id="user-password" placeholder="Password" />
+      <input id="user-role" placeholder="Role" />
+      <button id="save-user-btn">Save</button>
+      <button id="clear-user-btn">Clear</button>
+    </div>
+  </div>
 
-    function initializeGapiClient() {
-      gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: [DISCOVERY_DOC],
-      }).then(() => {
-        gapiInited = true;
-      });
-    }
-
-    window.onload = () => {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: '', // will be set on request
-      });
-    };
-
-    function handleAuthClick() {
-      tokenClient.callback = async (resp) => {
-        if (resp.error) throw resp;
-        await listSheetData();
-      };
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-    function handleSignoutClick() {
-      google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () => {
-        gapi.client.setToken('');
-        document.getElementById('content').innerText = 'Logged out.';
-      });
-    }
-
-    async function listSheetData() {
-      const spreadsheetId = '1bVnJwShGvmGR5W5NZ3vBSeKFhlWuzC8ej13lY3kldSY';
-      const range = 'Sheet1!A1:D10';
-
-      try {
-        const response = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range,
-        });
-
-        const rows = response.result.values;
-        if (!rows || rows.length === 0) {
-          document.getElementById('content').innerText = 'No data found.';
-          return;
-        }
-
-        let output = '';
-        rows.forEach((row) => {
-          output += row.join(', ') + '\n';
-        });
-        document.getElementById('content').innerText = output;
-      } catch (err) {
-        document.getElementById('content').innerText = `Error: ${err.message}`;
-      }
-    }
-  </script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
