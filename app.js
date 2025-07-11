@@ -3,11 +3,10 @@ import { CONFIG } from './config.js';
 import {
   initAuth,
   authorize,
-  logoutUser,       // NEW: For logging out of the app
-  deauthorizeGoogle,  // NEW: For revoking Google access
+  logoutUser,
+  deauthorizeGoogle,
   saveToken,
   getSavedToken,
-  // clearToken // No longer directly exported, used internally by logoutUser/deauthorizeGoogle
 } from './auth.js';
 import {
   fetchUsers,
@@ -18,76 +17,84 @@ import {
 
 let isAuthorized = false; // Tracks authorization state
 
-// --- Custom Modal Functions ---
-const customModal = document.getElementById('custom-modal');
-const modalMessage = document.getElementById('modal-message');
-const modalOkBtn = document.getElementById('modal-ok-btn');
-const modalYesBtn = document.getElementById('modal-yes-btn');
-const modalNoBtn = document.getElementById('modal-no-btn');
-const modalCloseButton = document.querySelector('.close-button');
+// --- Bootstrap Modal Integration (Updated) ---
+const bsModalElement = document.getElementById('bs-modal');
+// Initialize Bootstrap Modal instance once
+const bsModal = new bootstrap.Modal(bsModalElement, {
+  backdrop: 'static', // Prevent closing by clicking outside
+  keyboard: false     // Prevent closing with Esc key
+});
+const bsModalMessage = document.getElementById('bs-modal-message');
+const bsModalFooter = document.getElementById('bs-modal-footer');
 
+// Helper to show a simple alert-like Bootstrap modal
 function showAlert(message) {
   return new Promise(resolve => {
-    modalMessage.textContent = message;
-    modalOkBtn.style.display = 'inline-block';
-    modalYesBtn.style.display = 'none';
-    modalNoBtn.style.display = 'none';
-    customModal.style.display = 'flex';
+    bsModalMessage.textContent = message;
+    bsModalFooter.innerHTML = `
+      <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+    `;
+    bsModal.show();
 
-    const handler = () => {
-      customModal.style.display = 'none';
-      modalOkBtn.removeEventListener('click', handler);
-      modalCloseButton.removeEventListener('click', handler);
+    // Event listener for when the modal is hidden
+    bsModalElement.addEventListener('hidden.bs.modal', function handler() {
+      bsModalElement.removeEventListener('hidden.bs.modal', handler); // Remove self
       resolve();
-    };
-
-    modalOkBtn.addEventListener('click', handler);
-    modalCloseButton.addEventListener('click', handler);
+    });
   });
 }
 
+// Helper to show a confirm-like Bootstrap modal
 function showConfirm(message) {
   return new Promise(resolve => {
-    modalMessage.textContent = message;
-    modalOkBtn.style.display = 'none';
-    modalYesBtn.style.display = 'inline-block';
-    modalNoBtn.style.display = 'inline-block';
-    customModal.style.display = 'flex';
+    bsModalMessage.textContent = message;
+    bsModalFooter.innerHTML = `
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+      <button type="button" class="btn btn-primary" id="modal-yes-btn">Yes</button>
+    `;
+    bsModal.show();
+
+    const yesBtn = document.getElementById('modal-yes-btn');
 
     const yesHandler = () => {
-      customModal.style.display = 'none';
-      modalYesBtn.removeEventListener('click', yesHandler);
-      modalNoBtn.removeEventListener('click', noHandler);
-      modalCloseButton.removeEventListener('click', noHandler);
-      resolve(true);
+      bsModal.hide(); // Hide the modal
+      resolve(true); // User confirmed 'Yes'
     };
 
-    const noHandler = () => {
-      customModal.style.display = 'none';
-      modalYesBtn.removeEventListener('click', yesHandler);
-      modalNoBtn.removeEventListener('click', noHandler);
-      modalCloseButton.removeEventListener('click', noHandler);
-      resolve(false);
+    const hideHandler = () => { // Handles both 'No' button and 'Close' (x) button
+      yesBtn.removeEventListener('click', yesHandler);
+      bsModalElement.removeEventListener('hidden.bs.modal', hideHandler);
+      resolve(false); // User cancelled 'No' or closed
     };
 
-    modalYesBtn.addEventListener('click', yesHandler);
-    modalNoBtn.addEventListener('click', noHandler);
-    modalCloseButton.addEventListener('click', noHandler);
+    yesBtn.addEventListener('click', yesHandler);
+    bsModalElement.addEventListener('hidden.bs.modal', hideHandler); // Listen for any way modal is hidden
   });
 }
-// --- End Custom Modal Functions ---
+// --- End Bootstrap Modal Integration ---
 
 function showApp() {
   document.getElementById('login-box').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('logout-btn').style.display = 'inline-block';
-  document.getElementById('deauthorize-btn').style.display = 'inline-block'; // Show deauthorize button
+  document.getElementById('deauthorize-btn').style.display = 'inline-block';
   document.getElementById('authorize-btn').style.display = 'none';
 
   fetchUsers().then(users => {
     console.log('[app.js] Fetched users:', users);
     const tbody = document.getElementById('user-body');
     tbody.replaceChildren();
+
+    if (!users || users.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.setAttribute('colspan', '6');
+      td.className = 'text-center text-muted';
+      td.textContent = 'No users found.';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
 
     users
       .filter(row => row.length >= 3 && row[0])
@@ -101,10 +108,12 @@ function showApp() {
 
         const actions = document.createElement('td');
         const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-info me-2'; // Bootstrap class
         editBtn.textContent = 'Edit';
         editBtn.onclick = () => populateForm(row, index);
 
         const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-sm btn-danger'; // Bootstrap class
         delBtn.textContent = 'Delete';
         delBtn.onclick = async () => {
           const confirmed = await showConfirm('Delete user?');
@@ -123,7 +132,7 @@ function showApp() {
     showAlert("Error loading users: " + (error.message || JSON.stringify(error)));
     document.getElementById('login-box').style.display = 'block';
     document.getElementById('app').style.display = 'none';
-    document.getElementById('authorize-btn').style.display = 'inline-block'; // Show auth button on error
+    document.getElementById('authorize-btn').style.display = 'inline-block';
     document.getElementById('logout-btn').style.display = 'none';
     document.getElementById('deauthorize-btn').style.display = 'none';
   });
@@ -159,7 +168,6 @@ window.onload = () => {
       document.getElementById('authorize-btn').style.display = 'inline-block';
       document.getElementById('authorize-btn').disabled = false;
       document.getElementById('login-box').style.display = 'block';
-      // Hide other buttons if not authorized
       document.getElementById('logout-btn').style.display = 'none';
       document.getElementById('deauthorize-btn').style.display = 'none';
     }
@@ -198,8 +206,7 @@ document.getElementById('authorize-btn').onclick = () => {
     if (!tokenResponse.error) {
       isAuthorized = true;
       document.getElementById('authorize-btn').style.display = 'none';
-      document.getElementById('login-box').style.display = 'block'; // Show login box after successful auth
-      // Keep logout/deauthorize hidden until actual app login
+      document.getElementById('login-box').style.display = 'block';
       document.getElementById('logout-btn').style.display = 'none';
       document.getElementById('deauthorize-btn').style.display = 'none';
     } else {
@@ -232,20 +239,16 @@ document.getElementById('login-button').onclick = async () => {
     );
 
     if (match) {
-      // Upon successful app login, make sure a Google token is present
-      // and then save it along with the username.
       const currentGoogleToken = gapi.client.getToken()?.access_token;
       if (!currentGoogleToken) {
-        // This scenario should ideally not happen if authorize was successful.
-        // But as a fallback, you might want to force re-authorization here.
         await showAlert("Google authorization token missing. Please re-authorize.");
         document.getElementById('authorize-btn').style.display = 'inline-block';
         return;
       }
 
-      saveToken(currentGoogleToken); // Save the token that gapi.client currently holds
+      saveToken(currentGoogleToken);
       sessionStorage.setItem('username', username);
-      showApp(); // Show the main app UI
+      showApp();
     } else {
       errorBox.textContent = 'Invalid username or password.';
     }
@@ -256,9 +259,8 @@ document.getElementById('login-button').onclick = async () => {
   }
 };
 
-// NEW: Handler for "Logout" button (clears local session)
 document.getElementById('logout-btn').onclick = () => {
-  logoutUser(); // Clear local session data
+  logoutUser();
   isAuthorized = false;
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-box').style.display = 'block';
@@ -268,11 +270,10 @@ document.getElementById('logout-btn').onclick = () => {
   clearForm();
 };
 
-// NEW: Handler for "Deauthorize Google" button (revokes Google access)
 document.getElementById('deauthorize-btn').onclick = async () => {
   const confirmed = await showConfirm('Are you sure you want to deauthorize this app from your Google account? You will need to re-authorize next time.');
   if (confirmed) {
-    deauthorizeGoogle(); // Revoke Google token and clear local session
+    deauthorizeGoogle();
     isAuthorized = false;
     document.getElementById('app').style.display = 'none';
     document.getElementById('login-box').style.display = 'block';

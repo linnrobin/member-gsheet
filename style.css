@@ -1,95 +1,11 @@
 /* style.css */
+/* Minimal custom styles, Bootstrap handles most layout and component styling */
+
+/* Example: Adjust body padding if container needs more space */
 body {
-  font-family: Arial, sans-serif;
-  padding: 30px;
-}
-#app, #login-box {
-  margin-top: 20px;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 20px;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-th {
-  background-color: #f4f4f4;
-}
-#error {
-  color: red;
-  margin-top: 10px;
+  padding-bottom: 50px; /* To ensure content doesn't get cut off at the bottom */
 }
 
-/* --- Custom Modal Styles --- */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1000; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-  /* Use flexbox for centering content vertically and horizontally */
-  display: flex; /* Changed from none to flex here to enable centering, will be toggled by JS */
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: auto; /* Centered */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be responsive */
-  max-width: 400px; /* Max width for readability */
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-  animation-name: animatetop;
-  animation-duration: 0.4s;
-  position: relative; /* For positioning the close button */
-}
-
-/* Add Animation for modal entry */
-@keyframes animatetop {
-  from {top: -300px; opacity: 0}
-  to {top: 0; opacity: 1}
-}
-
-.close-button {
-  color: #aaa;
-  float: right; /* Keeps it on the top right */
-  font-size: 28px;
-  font-weight: bold;
-  position: absolute; /* Position relative to .modal-content */
-  top: 10px;
-  right: 15px;
-}
-
-.close-button:hover,
-.close-button:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-#modal-buttons {
-  margin-top: 15px;
-  text-align: right;
-}
-
-#modal-buttons button {
-  padding: 8px 15px;
-  margin-left: 10px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  background-color: #e0e0e0;
-  border-radius: 4px;
-}
-
-#modal-buttons button:hover {
-  background-color: #d0d0d0;
-}
+/* You can add specific overrides here if Bootstrap defaults aren't what you want */
+/* For instance, if you want a custom background color for the body */
+/* body { background-color: #f8f9fa; } */
