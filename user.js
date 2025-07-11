@@ -1,3 +1,4 @@
+//user.js
 import { CONFIG } from './config.js';
 
 export async function fetchUsers() {

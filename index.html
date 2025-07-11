@@ -1,3 +1,4 @@
+<!--index.html-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,21 +7,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<<<<<<< HEAD
-  <h1>Read Google Sheet with OAuth222</h1>
-  <button onclick="handleAuthClick()">Authorize</button>
-  <button onclick="handleSignoutClick()">Sign Out</button>
-  <pre id="content"></pre>
-=======
   <h1>
     Membership Admin Panel
     <button id="logout-btn" style="display: none; float: right;">Logout</button>
   </h1>
->>>>>>> a92c1405cf78cabbbf8dbf86cbd2fa9949ccecb2
 
-  <button id="authorize-btn" disabled>Authorize with Google</button>
-
-  <div id="login-box" style="display: none;">
+  <button id="authorize-btn">Authorize with Google</button>
+  <button id="signout-btn" style="display: none;">Sign Out</button>
+  <pre id="content" style="display: none;"></pre> <div id="login-box" style="display: none;">
     <h2>Login</h2>
     <input id="login-username" placeholder="Username" />
     <input id="login-password" placeholder="Password" type="password" />
@@ -60,5 +54,17 @@
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script type="module" src="app.js"></script>
+
+  <div id="custom-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <p id="modal-message"></p>
+      <div id="modal-buttons">
+        <button id="modal-ok-btn" style="display: none;">OK</button>
+        <button id="modal-yes-btn" style="display: none;">Yes</button>
+        <button id="modal-no-btn" style="display: none;">No</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
