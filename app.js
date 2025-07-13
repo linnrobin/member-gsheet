@@ -109,12 +109,12 @@ function showApp() {
         const actions = document.createElement('td');
         const editBtn = document.createElement('button');
         editBtn.className = 'btn btn-sm btn-info me-2'; // Bootstrap class
-        editBtn.textContent = 'Edit';
+        editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16"><path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-4 1.5a.5.5 0 0 1-.65-.65l1.5-4a.5.5 0 0 1 .11-.168l10-10zm.708-.708A1.5 1.5 0 0 0 12.146.146l-10 10a1.5 1.5 0 0 0-.329.497l-1.5 4A1.5 1.5 0 0 0 2.5 16a1.5 1.5 0 0 0 .497-.329l4-1.5a1.5 1.5 0 0 0 .497-.329l10-10a1.5 1.5 0 0 0 0-2.121l-2.292-2.292z"/></svg>';
         editBtn.onclick = () => populateForm(row, index);
 
         const delBtn = document.createElement('button');
         delBtn.className = 'btn btn-sm btn-danger'; // Bootstrap class
-        delBtn.textContent = 'Delete';
+        delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6zm3 .5a.5.5 0 0 1 .5-.5.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6zm-7-1A1.5 1.5 0 0 1 4 4.5V5h8v-.5A1.5 1.5 0 0 1 13.5 3h-11A1.5 1.5 0 0 1 4 4.5V5zm1-1A.5.5 0 0 0 4.5 4h7a.5.5 0 0 0 .5-.5V4a.5.5 0 0 0-.5-.5h-7A.5.5 0 0 0 4 4v.5z"/></svg>';
         delBtn.onclick = async () => {
           const confirmed = await showConfirm('Delete user?');
           if (confirmed) {
