@@ -8,12 +8,14 @@ import {
   saveToken,
   getSavedToken,
 } from './auth.js';
+
 import {
   fetchUsers,
   appendUser,
   updateUser,
   deleteUserAt
 } from './user.js';
+import { validateUser } from './validation.js';
 
 let isAuthorized = false; // Tracks authorization state
 
@@ -89,10 +91,10 @@ function showApp() {
         }
 
         const actions = document.createElement('td');
-        const editBtn = document.createElement('a');
+        const editBtn = document.createElement('button');
         editBtn.className = 'btn btn-sm btn-info me-2';
-        editBtn.href = `user-form.html?index=${index}`;
         editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706l-1 1a.5.5 0 0 1-.708 0l-1-1a.5.5 0 0 1 0-.707l1-1a.5.5 0 0 1 .708 0l1 1zm-1.75 2.456-1-1L4 11.146V12h.854l8.898-8.898z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>';
+        editBtn.onclick = () => openSidePanel('edit', row, index);
 
         const delBtn = document.createElement('button');
         delBtn.className = 'btn btn-sm btn-danger';
@@ -114,9 +116,14 @@ function showApp() {
     const addBtnCell = document.createElement('td');
     addBtnCell.colSpan = 6;
     addBtnCell.className = 'text-end';
-    addBtnCell.innerHTML = '<a href="user-form.html" class="btn btn-success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus" viewBox="0 0 16 16"><path d="M8 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a.5.5 0 0 1 .5.5V6h1.5a.5.5 0 0 1 0 1H12.5v1.5a.5.5 0 0 1-1 0V7H10a.5.5 0 0 1 0-1h1.5V4.5a.5.5 0 0 1 .5-.5z"/><path d="M2 13s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2zm13-1c0-1-3-3-6-3s-6 2-6 3h12z"/></svg> Add User</a>';
+    addBtnCell.innerHTML = '<button id="add-user-btn" class="btn btn-success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus" viewBox="0 0 16 16"><path d="M8 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a.5.5 0 0 1 .5.5V6h1.5a.5.5 0 0 1 0 1H12.5v1.5a.5.5 0 0 1-1 0V7H10a.5.5 0 0 1 0-1h1.5V4.5a.5.5 0 0 1 .5-.5z"/><path d="M2 13s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2zm13-1c0-1-3-3-6-3s-6 2-6 3h12z"/></svg> Add User</button>';
     addBtnRow.appendChild(addBtnCell);
     tbody.appendChild(addBtnRow);
+    // Add event listener for add user
+    setTimeout(() => {
+      const addUserBtn = document.getElementById('add-user-btn');
+      if (addUserBtn) addUserBtn.onclick = () => openSidePanel('add');
+    }, 0);
   }).catch(error => {
     console.error("[app.js] Error fetching users:", error);
     showAlert("Error loading users: " + (error.message || JSON.stringify(error)));
@@ -126,6 +133,82 @@ function showApp() {
     document.getElementById('logout-btn').style.display = 'none';
     document.getElementById('deauthorize-btn').style.display = 'none';
   });
+}
+
+// --- Side Panel Logic ---
+const sidePanel = document.getElementById('side-panel');
+const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
+const sidePanelClose = document.getElementById('side-panel-close');
+const sideUserForm = document.getElementById('side-user-form');
+const sideUserIndex = document.getElementById('side-user-index');
+const sideUserUsername = document.getElementById('side-user-username');
+const sideUserPassword = document.getElementById('side-user-password');
+const sideUserRole = document.getElementById('side-user-role');
+const sideFormError = document.getElementById('side-form-error');
+
+function openSidePanel(mode, row = [], index = '') {
+  sidePanel.classList.add('open');
+  sidePanelBackdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (mode === 'edit') {
+    document.getElementById('side-panel-title').textContent = 'Edit User';
+    sideUserIndex.value = index;
+    sideUserUsername.value = row[0] || '';
+    sideUserPassword.value = row[1] || '';
+    sideUserRole.value = row[2] || '';
+  } else {
+    document.getElementById('side-panel-title').textContent = 'Add User';
+    sideUserIndex.value = '';
+    sideUserUsername.value = '';
+    sideUserPassword.value = '';
+    sideUserRole.value = '';
+  }
+  sideFormError.textContent = '';
+  setTimeout(() => sideUserUsername.focus(), 100);
+}
+
+function closeSidePanel() {
+  sidePanel.classList.remove('open');
+  sidePanelBackdrop.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+if (sidePanelClose) sidePanelClose.onclick = closeSidePanel;
+if (sidePanelBackdrop) sidePanelBackdrop.onclick = closeSidePanel;
+if (document.getElementById('side-cancel-user-btn')) document.getElementById('side-cancel-user-btn').onclick = closeSidePanel;
+
+if (sideUserForm) {
+  sideUserForm.onsubmit = async (e) => {
+    e.preventDefault();
+    sideFormError.textContent = '';
+    const index = sideUserIndex.value;
+    const username = sideUserUsername.value.trim();
+    const password = sideUserPassword.value.trim();
+    const role = sideUserRole.value.trim();
+    const errors = validateUser({ username, password, role });
+    if (Object.keys(errors).length > 0) {
+      sideFormError.textContent = Object.values(errors).join(' ');
+      return;
+    }
+    try {
+      if (index === '') {
+        await appendUser({ username, password, role });
+        showToast('User added successfully!', 'success');
+      } else {
+        const users = await fetchUsers();
+        const created_at = users[parseInt(index, 10)]?.[3] || new Date().toISOString();
+        await updateUser(index, { username, password, role, created_at });
+        showToast('User updated successfully!', 'success');
+      }
+      closeSidePanel();
+      showApp();
+    } catch (err) {
+      sideFormError.textContent = 'Error saving user.';
+      showToast('Error saving user.', 'danger');
+      console.error(err);
+    }
+
+  };
 }
 
 function populateForm(row, index) {

@@ -1,0 +1,8 @@
+// config.example.js
+export const CONFIG = {
+  CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID',
+  USERS_SHEET_ID: 'YOUR_USERS_SHEET_ID',
+  ADMINS_SHEET_ID: 'YOUR_ADMINS_SHEET_ID',
+  USERS_RANGE: 'Sheet1!A2:E',
+  ADMINS_RANGE: 'Sheet1!A2:D'
+};

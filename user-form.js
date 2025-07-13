@@ -1,4 +1,5 @@
 import { fetchUsers, appendUser, updateUser } from './user.js';
+import { validateUser } from './validation.js';
 
 // Get query params for edit
 function getQueryParams() {
@@ -39,8 +40,9 @@ userForm.onsubmit = async (e) => {
   const password = document.getElementById('user-password').value.trim();
   const role = document.getElementById('user-role').value.trim();
 
-  if (!username || !password || !role) {
-    errorBox.textContent = 'All fields are required.';
+  const errors = validateUser({ username, password, role });
+  if (Object.keys(errors).length > 0) {
+    errorBox.textContent = Object.values(errors).join(' ');
     return;
   }
 

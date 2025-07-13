@@ -52,26 +52,32 @@
         </table>
       </div>
 
-      <h3 class="h4 mt-4 mb-3">Add / Update User</h3>
-      <div id="user-form" class="card p-4">
-        <input id="user-index" type="hidden" />
-        <div class="mb-3">
-          <label for="user-username" class="form-label visually-hidden">Username</label>
-          <input id="user-username" class="form-control" placeholder="Username" />
-        </div>
-        <div class="mb-3">
-          <label for="user-password" class="form-label visually-hidden">Password</label>
-          <input id="user-password" class="form-control" placeholder="Password" />
-        </div>
-        <div class="mb-3">
-          <label for="user-role" class="form-label visually-hidden">Role</label>
-          <input id="user-role" class="form-control" placeholder="Role" />
-        </div>
-        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-          <button id="save-user-btn" class="btn btn-primary me-md-2">Save</button>
-          <button id="clear-user-btn" class="btn btn-secondary">Clear</button>
-        </div>
-      </div>
+      <!-- Side Panel for Add/Edit User -->
+      <div id="side-panel-backdrop" class="side-panel-backdrop"></div>
+      <aside id="side-panel" class="side-panel" aria-modal="true" aria-labelledby="side-panel-title" tabindex="-1">
+        <button class="side-panel-close" id="side-panel-close" aria-label="Close">&times;</button>
+        <h2 id="side-panel-title" class="h4 mb-3">User Form</h2>
+        <form id="side-user-form">
+          <input id="side-user-index" type="hidden" />
+          <div class="mb-3">
+            <label for="side-user-username" class="form-label">Username</label>
+            <input id="side-user-username" class="form-control" placeholder="Username" required />
+          </div>
+          <div class="mb-3">
+            <label for="side-user-password" class="form-label">Password</label>
+            <input id="side-user-password" class="form-control" placeholder="Password" type="password" required />
+          </div>
+          <div class="mb-3">
+            <label for="side-user-role" class="form-label">Role</label>
+            <input id="side-user-role" class="form-control" placeholder="Role" required />
+          </div>
+          <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary" id="side-save-user-btn">Save</button>
+            <button type="button" class="btn btn-secondary" id="side-cancel-user-btn">Cancel</button>
+          </div>
+          <div id="side-form-error" class="text-danger mt-2"></div>
+        </form>
+      </aside>
     </div>
   </div>
 

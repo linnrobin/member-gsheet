@@ -1,0 +1,13 @@
+{
+  "name": "member-gsheet-boilerplate",
+  "version": "1.0.0",
+  "description": "Google Sheets-powered membership/admin panel boilerplate.",
+  "scripts": {
+    "lint": "eslint . --ext .js",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}

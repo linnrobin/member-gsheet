@@ -1,11 +1,85 @@
 /* style.css */
-/* Minimal custom styles, Bootstrap handles most layout and component styling */
+/* Modern, mobile-first, side-panel layout and custom overrides */
 
-/* Example: Adjust body padding if container needs more space */
 body {
-  padding-bottom: 50px; /* To ensure content doesn't get cut off at the bottom */
+  padding-bottom: 50px;
+  background-color: #f8f9fa;
 }
 
-/* You can add specific overrides here if Bootstrap defaults aren't what you want */
-/* For instance, if you want a custom background color for the body */
-/* body { background-color: #f8f9fa; } */
+@media (max-width: 768px) {
+  .side-panel {
+    width: 100vw;
+    min-width: 0;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1050;
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    transform: translateX(-100%);
+  }
+  .side-panel.open {
+    transform: translateX(0);
+  }
+  .side-panel-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .side-panel {
+    width: 320px;
+    min-width: 320px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1050;
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    transform: translateX(-100%);
+  }
+  .side-panel.open {
+    transform: translateX(0);
+  }
+  .side-panel-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+  }
+}
+
+.side-panel-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.2);
+  z-index: 1040;
+  display: none;
+}
+.side-panel-backdrop.open {
+  display: block;
+}
+
+/* Toast overrides for better visibility */
+#toast-notification {
+  min-width: 220px;
+  font-size: 1rem;
+}
