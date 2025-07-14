@@ -187,7 +187,8 @@ import {
   appendUser,
   updateUser,
   deleteUserAt,
-  updateNavVisibility
+  updateNavVisibility,
+  openChangePasswordModal
 } from './user.js?v=2';
 
 import { validateUser } from './validation.js';
@@ -270,7 +271,7 @@ function renderPage(page) {
       renderAdminsPage();
       break;
     case 'roles':
-      main.innerHTML = `<h2 class="h4 mb-3">User Levels</h2><div class="card p-4"><form id="role-form" class="mb-3"><div class="input-group"><input type="text" id="new-role" class="form-control" placeholder="Add new role" /><button class="btn btn-primary" type="submit">Add</button></div></form><ul id="role-list" class="list-group"></ul></div>`;
+      main.innerHTML = `<h2 class="h4 mb-3">User Levels</h2><div class="card p-4"><form id="role-form" class="mb-3"><div class="input-group"><input type="text" id="new-role" class="form-control" placeholder="Add new role" /><button class="btn btn-primary" type="submit"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/></svg> Add</button></div></form><ul id="role-list" class="list-group"></ul></div>`;
       setActiveNav('nav-roles');
       renderRolesPage();
       break;
@@ -290,11 +291,18 @@ function renderPage(page) {
       renderActivityLogPage('user');
       break;
     case 'settings':
-      main.innerHTML = `<h2 class="h4 mb-3">Settings</h2><div class="card p-4"><form id="change-password-form"><div class="mb-3"><label for="current-password" class="form-label">Current Password</label><input type="password" id="current-password" class="form-control" required></div><div class="mb-3"><label for="new-password" class="form-label">New Password</label><input type="password" id="new-password" class="form-control" required></div><button type="submit" class="btn btn-primary"><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-key' viewBox='0 0 16 16'><path d='M3 8a5 5 0 1 1 9.584 2.166l2.122 2.122a1 1 0 0 1-1.415 1.415l-.707-.707-.707.707a1 1 0 0 1-1.415-1.415l.707-.707-.707-.707A5 5 0 0 1 3 8zm5-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'/></svg> <span class="visually-hidden">Change Password</span></button><div id="settings-form-error" class="text-danger mt-2"></div></form></div>`;
+      main.innerHTML = `<h2 class="h4 mb-3">Settings</h2><div class="card p-4"><form id="change-password-form"><div class="mb-3"><label for="current-password" class="form-label">Current Password</label><input type="password" id="current-password" class="form-control" required></div><div class="mb-3"><label for="new-password" class="form-label">New Password</label><input type="password" id="new-password" class="form-control" required></div><button type="submit" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg> <span class="visually-hidden">Change Password</span></button><div id="settings-form-error" class="text-danger mt-2"></div></form></div>`;
       setActiveNav('nav-settings');
       renderSettingsPage();
       break;
     default:
+      // Check if it's a user detail page (user-detail-{index})
+      if (page.startsWith('user-detail-')) {
+        const userIndex = page.replace('user-detail-', '');
+        renderUserDetailPage(userIndex);
+        setActiveNav('nav-users');
+        break;
+      }
       main.innerHTML = `<h2 class="h4 mb-3">Dashboard</h2><div class="card p-4">Welcome to the admin dashboard.</div>`;
       setActiveNav('nav-dashboard');
   }
@@ -442,7 +450,7 @@ async function showApp(page = 1, pageSize = 10) {
       // Change Password button (key icon, accessible label)
       const changePwdBtn = document.createElement('button');
       changePwdBtn.className = 'btn btn-sm btn-warning me-2';
-      changePwdBtn.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-key' viewBox='0 0 16 16'><path d='M3 8a5 5 0 1 1 9.584 2.166l2.122 2.122a1 1 0 0 1-1.415 1.415l-.707-.707-.707.707a1 1 0 0 1-1.415-1.415l.707-.707-.707-.707A5 5 0 0 1 3 8zm5-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'/></svg> <span class='visually-hidden'>Change Password</span>`;
+      changePwdBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg> <span class='visually-hidden'>Change Password</span>`;
       changePwdBtn.title = 'Change Password';
       changePwdBtn.setAttribute('aria-label', 'Change Password');
       changePwdBtn.onclick = () => openChangePasswordModal(startIdx + idx, row);
@@ -587,8 +595,8 @@ if (sideUserForm) {
     }
     try {
       // Hash password before saving
-      const salt = bcrypt.genSaltSync(10);
-      const hashedPassword = bcrypt.hashSync(password, salt);
+      const salt = window.bcrypt.genSaltSync(10);
+      const hashedPassword = window.bcrypt.hashSync(password, salt);
       if (index === '') {
         await appendUser({ username, password: hashedPassword, role });
         showToast('User added successfully!', 'success');
@@ -841,4 +849,193 @@ function renderActivityLogPage(type = 'user') {
       });
     });
   }
+}
+
+// --- User Detail Page Logic ---
+async function renderUserDetailPage(userIndex) {
+  const main = document.getElementById('main-content');
+  if (!main) return;
+
+  try {
+    const users = await fetchUsers();
+    const user = users[parseInt(userIndex, 10)];
+    
+    if (!user) {
+      main.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">User Not Found</h2>
+          <a href="#users" class="btn btn-secondary">← Back to Users</a>
+        </div>
+        <div class="alert alert-warning">The requested user could not be found.</div>
+      `;
+      return;
+    }
+
+    const username = user[0] || 'N/A';
+    const role = user[2] || 'N/A';
+    const createdAt = user[3] ? formatDate(user[3]) : 'N/A';
+    const updatedAt = user[4] ? formatDate(user[4]) : 'N/A';
+
+    main.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">User Details: ${username}</h2>
+        <a href="#users" class="btn btn-secondary">← Back to Users</a>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title mb-0">User Information</h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-borderless">
+                <tr>
+                  <th width="150">Username:</th>
+                  <td>${username}</td>
+                </tr>
+                <tr>
+                  <th>Role:</th>
+                  <td>
+                    <span class="badge ${role === 'admin' ? 'bg-danger' : 'bg-primary'}">${role}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Privileges:</th>
+                  <td>${role === 'admin' ? 'Administrative access' : 'Standard user access'}</td>
+                </tr>
+                <tr>
+                  <th>Created:</th>
+                  <td>${createdAt}</td>
+                </tr>
+                <tr>
+                  <th>Last Updated:</th>
+                  <td>${updatedAt}</td>
+                </tr>
+                <tr>
+                  <th>User Index:</th>
+                  <td>${userIndex}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <button class="btn btn-warning" onclick="openChangePasswordModalFromDetail(${userIndex}, '${username}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+                  Change Password
+                </button>
+                <button class="btn btn-info" onclick="openSidePanelFromDetail(${userIndex})">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706l-1 1a.5.5 0 0 1-.708 0l-1-1a.5.5 0 0 1 0-.707l1-1a.5.5 0 0 1 .708 0l1 1zm-1.75 2.456-1-1L4 11.146V12h.854l8.898-8.898z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>
+                  Edit User
+                </button>
+                <button class="btn btn-danger" onclick="deleteUserFromDetail(${userIndex}, '${username}', '${role}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16"><path d="M6.5 1.5v-1h3v1H14a.5.5 0 0 1 0 1h-1v11A2.5 2.5 0 0 1 10.5 16h-5A2.5 2.5 0 0 1 3 13.5v-11H2a.5.5 0 0 1 0-1h3.5zm-3 2v10A1.5 1.5 0 0 0 5.5 15h5A1.5 1.5 0 0 0 12 13.5v-10h-8z"/><path d="M8 5.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5zm-2 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5z"/></svg>
+                  Delete User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Log the detail view action
+    if (role === 'admin') {
+      logAdminAction(
+        `viewed admin details`,
+        `viewed details page for admin '${username}' at ${getLogTime()}`
+      );
+    } else {
+      logUserAction(
+        `viewed user details`,
+        `viewed details page for user '${username}' at ${getLogTime()}`
+      );
+    }
+
+  } catch (error) {
+    console.error('[renderUserDetailPage] Error:', error);
+    main.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Error</h2>
+        <a href="#users" class="btn btn-secondary">← Back to Users</a>
+      </div>
+      <div class="alert alert-danger">Failed to load user details. Please try again.</div>
+    `;
+  }
+}
+
+// Helper functions for user detail page actions
+async function openChangePasswordModalFromDetail(userIndex, username) {
+  const users = await fetchUsers();
+  const user = users[parseInt(userIndex, 10)];
+  if (user) {
+    openChangePasswordModal(userIndex, user);
+  }
+}
+
+async function openSidePanelFromDetail(userIndex) {
+  const users = await fetchUsers();
+  const user = users[parseInt(userIndex, 10)];
+  if (user) {
+    openSidePanel('edit', user, userIndex);
+  }
+}
+
+async function deleteUserFromDetail(userIndex, username, role) {
+  const confirmed = await showConfirm(`Delete user "${username}"?`);
+  if (confirmed) {
+    try {
+      await deleteUserAt(userIndex);
+      showToast('User deleted successfully!', 'success');
+      if (role === 'admin') {
+        logAdminAction(
+          `deleted admin`,
+          `deleted admin '${username}' from detail page at ${getLogTime()}`
+        );
+      } else {
+        logUserAction(
+          `deleted user`,
+          `deleted user '${username}' from detail page at ${getLogTime()}`
+        );
+      }
+      // Redirect back to users list
+      window.location.hash = 'users';
+    } catch (err) {
+      showToast('Error deleting user.', 'danger');
+      console.error(err);
+    }
+  }
+}
+
+function getLogTime() {
+  const now = new Date();
+  return now.toISOString().replace('T', ' ').substring(0, 19);
+}
+
+function logAdminAction(action, details = '') {
+  import('./api/activityLogApi.js').then(({ appendAdminActivityLog }) => {
+    appendAdminActivityLog({
+      user: sessionStorage.getItem('username') || 'unknown',
+      action,
+      details,
+    });
+  });
+}
+
+function logUserAction(action, details = '') {
+  import('./api/activityLogApi.js').then(({ appendUserActivityLog }) => {
+    appendUserActivityLog({
+      user: sessionStorage.getItem('username') || 'unknown',
+      action,
+      details,
+    });
+  });
 }
