@@ -47,6 +47,19 @@ export function setUserHelpers({ showToast: st, showAlert: sa }) {
   showAlert = sa;
 }
 
+// --- Navbar Role/Visibility Logic ---
+export function updateNavVisibility(currentUserRole, isAuthorized) {
+  // Hide admin links if not admin or not authorized
+  const adminLinks = [
+    document.getElementById('nav-admins'),
+    document.getElementById('nav-admin-roles'),
+    document.getElementById('nav-activity-admin-log')
+  ];
+  adminLinks.forEach(link => {
+    if (link) link.style.display = (isAuthorized && currentUserRole === 'admin') ? '' : 'none';
+  });
+}
+
 // --- User Table Rendering & UI Logic ---
 export async function showApp(page = 1, pageSize = 10) {
 

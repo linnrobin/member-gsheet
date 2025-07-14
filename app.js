@@ -188,7 +188,7 @@ import {
   updateUser,
   deleteUserAt,
   updateNavVisibility
-} from './user.js';
+} from './user.js?v=2';
 
 import { validateUser } from './validation.js';
 
