@@ -1,6 +1,6 @@
 {
   "name": "member-gsheet-boilerplate",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Google Sheets-powered membership/admin panel boilerplate.",
   "scripts": {
     "lint": "eslint . --ext .js",

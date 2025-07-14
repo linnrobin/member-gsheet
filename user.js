@@ -40,6 +40,17 @@ export function setUserHelpers({ showToast: st, showAlert: sa }) {
 
 // --- User Table Rendering & UI Logic ---
 export async function showApp(page = 1, pageSize = 10) {
+  // Prevent rendering if not authorized or not logged in
+  if (!window.isAuthorized || !sessionStorage.getItem('username')) {
+    const appDiv = document.getElementById('app');
+    if (appDiv) appDiv.style.display = 'none';
+    const loginBox = document.getElementById('login-box');
+    if (loginBox) loginBox.style.display = 'block';
+    const authBtn = document.getElementById('authorize-btn');
+    if (authBtn) authBtn.style.display = 'inline-block';
+    return;
+  }
+
   const loginBox = document.getElementById('login-box');
   if (loginBox) loginBox.style.display = 'none';
   const appDiv = document.getElementById('app');

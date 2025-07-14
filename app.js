@@ -299,11 +299,16 @@ function showConfirm(message) {
 // --- End Bootstrap Toast Notification Integration ---
 
 async function showApp(page = 1, pageSize = 10) {
-  document.getElementById('login-box').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('logout-btn').style.display = 'inline-block';
-  document.getElementById('deauthorize-btn').style.display = 'inline-block';
-  document.getElementById('authorize-btn').style.display = 'none';
+  const loginBox = document.getElementById('login-box');
+  if (loginBox) loginBox.style.display = 'none';
+  const appDiv = document.getElementById('app');
+  if (appDiv) appDiv.style.display = 'block';
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) logoutBtn.style.display = 'inline-block';
+  const deauthBtn = document.getElementById('deauthorize-btn');
+  if (deauthBtn) deauthBtn.style.display = 'inline-block';
+  const authBtn = document.getElementById('authorize-btn');
+  if (authBtn) authBtn.style.display = 'none';
 
   try {
     const users = await fetchUsers();
