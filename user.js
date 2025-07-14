@@ -64,8 +64,10 @@ export async function showApp(page = 1, pageSize = 10) {
 
   try {
     const users = await fetchUsers();
-    const thead = document.querySelector('#user-body').parentElement.querySelector('thead');
-    const tbody = document.getElementById('user-body');
+    const userBody = document.querySelector('#user-body');
+    const thead = userBody && userBody.parentElement ? userBody.parentElement.querySelector('thead') : null;
+    const tbody = userBody;
+    if (!tbody) return; // Defensive: don't proceed if tbody is missing
     tbody.replaceChildren();
 
     if (!users || users.length === 0) {
@@ -165,12 +167,22 @@ export async function showApp(page = 1, pageSize = 10) {
     // (Add User button is now above the table in index.html)
   } catch (error) {
     console.error("[user.js] Error fetching users:", error);
-    showAlert("Error loading users: " + (error.message || JSON.stringify(error)));
-    document.getElementById('login-box').style.display = 'block';
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('authorize-btn').style.display = 'inline-block';
-    document.getElementById('logout-btn').style.display = 'none';
-    document.getElementById('deauthorize-btn').style.display = 'none';
+    // Show API error box instead of login form
+    const apiErrorBox = document.getElementById('api-error-box');
+    if (apiErrorBox) {
+      apiErrorBox.textContent = "Unable to access data. Please check your API credentials or try again later.";
+      apiErrorBox.style.display = 'block';
+    }
+    const appDiv = document.getElementById('app');
+    if (appDiv) appDiv.style.display = 'none';
+    const loginBox = document.getElementById('login-box');
+    if (loginBox) loginBox.style.display = 'none';
+    const authBtn = document.getElementById('authorize-btn');
+    if (authBtn) authBtn.style.display = 'none';
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    const deauthBtn = document.getElementById('deauthorize-btn');
+    if (deauthBtn) deauthBtn.style.display = 'none';
   }
 }
 
