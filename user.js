@@ -49,7 +49,6 @@ export function setUserHelpers({ showToast: st, showAlert: sa }) {
 
 // --- Navbar Role/Visibility Logic ---
 export function updateNavVisibility(currentUserRole, isAuthorized) {
-  console.log('[DEBUG] updateNavVisibility:', { currentUserRole, isAuthorized });
   // Hide admin links if not admin or not authorized
   const adminLinks = [
     document.getElementById('nav-admins'),
@@ -57,33 +56,24 @@ export function updateNavVisibility(currentUserRole, isAuthorized) {
     document.getElementById('nav-activity-admin-log')
   ];
   const shouldShowAdmin = (isAuthorized && currentUserRole === 'admin');
-  console.log('[DEBUG] Should show admin links:', shouldShowAdmin);
   
   // Hide/show individual admin links
   adminLinks.forEach(link => {
-    if (link) {
-      link.style.display = shouldShowAdmin ? '' : 'none';
-      console.log('[DEBUG] Link', link.id, 'display set to:', link.style.display);
-    }
+    if (link) link.style.display = shouldShowAdmin ? '' : 'none';
   });
   
   // Hide/show the entire admin accordion if no admin links are visible
   const adminAccordion = document.querySelector('#nav-accordion-admins').closest('li.nav-item');
   if (adminAccordion) {
     adminAccordion.style.display = shouldShowAdmin ? '' : 'none';
-    console.log('[DEBUG] Admin accordion display set to:', adminAccordion.style.display);
   }
 }
 
 // --- User Table Rendering & UI Logic ---
 export async function showApp(page = 1, pageSize = 10) {
-
   // Prevent rendering if not authorized or not logged in
   if (!window.isAuthorized || !sessionStorage.getItem('username')) {
-    console.log('[showApp] Not authorized or not logged in:', {
-      isAuthorized: window.isAuthorized,
-      sessionUser: sessionStorage.getItem('username')
-    });
+    console.log('[showApp] Not authorized or not logged in - showing login form');
     const appDiv = document.getElementById('app');
     if (appDiv) appDiv.style.display = 'none';
     const loginBox = document.getElementById('login-box');
@@ -104,21 +94,24 @@ export async function showApp(page = 1, pageSize = 10) {
   const authBtn = document.getElementById('authorize-btn');
   if (authBtn) authBtn.style.display = 'none';
 
+  const mainContent = document.getElementById('main-content');
+  if (!mainContent) {
+    console.error('[showApp] main-content element not found in DOM!');
+    return;
+  }
+
   try {
-    console.log('[showApp] Fetching users...');
     const users = await fetchUsers();
-    console.log('[showApp] Users fetched:', users);
     const userBody = document.querySelector('#user-body');
     const thead = userBody && userBody.parentElement ? userBody.parentElement.querySelector('thead') : null;
     const tbody = userBody;
     if (!tbody) {
-      console.warn('[showApp] tbody (#user-body) not found in DOM.');
+      console.error('[showApp] tbody (#user-body) not found in DOM. Main content HTML:', mainContent.innerHTML);
       return; // Defensive: don't proceed if tbody is missing
     }
     tbody.replaceChildren();
 
     if (!users || users.length === 0) {
-      console.log('[showApp] No users found.');
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.setAttribute('colspan', '100');
@@ -446,11 +439,16 @@ export function openChangePasswordModal(index, row) {
 import { CONFIG } from './config.js';
 
 export async function fetchUsers() {
-  const res = await gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: CONFIG.USERS_SHEET_ID,
-    range: CONFIG.USERS_RANGE,
-  });
-  return res.result.values || [];
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.USERS_SHEET_ID,
+      range: CONFIG.USERS_RANGE,
+    });
+    return res.result.values || [];
+  } catch (error) {
+    console.error('[fetchUsers] Error fetching users:', error);
+    throw error;
+  }
 }
 
 export async function appendUser(user) {

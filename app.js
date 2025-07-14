@@ -224,7 +224,10 @@ function renderPage(page) {
   // Update nav visibility on every page render
   updateNavVisibility(currentUserRole, isAuthorized);
   const main = document.getElementById('main-content');
-  if (!main) return;
+  if (!main) {
+    console.error('[renderPage] main-content element not found!');
+    return;
+  }
 
   // Guard: Only allow access if authorized and logged in
   const username = sessionStorage.getItem('username');
@@ -263,7 +266,26 @@ function renderPage(page) {
       setActiveNav('nav-dashboard');
       break;
     case 'users':
-      main.innerHTML = '';
+      main.innerHTML = `
+        <h2 class="h4 mb-3">Users</h2>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Role</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="user-body">
+              <tr><td colspan="6" class="text-center">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
       setActiveNav('nav-users');
       showApp();
       break;
@@ -645,8 +667,6 @@ function clearForm() {
 window.onload = () => {
   console.log('[app.js] Window loaded. Initializing auth...');
   setupNavigation();
-  // Initialize navigation visibility for non-logged-in state
-  updateNavVisibility(null, false);
   initAuth(async () => {
     const savedToken = getSavedToken();
     const savedUser = sessionStorage.getItem('username');
