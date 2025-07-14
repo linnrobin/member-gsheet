@@ -1,6 +1,93 @@
 //app.js
 // Versioning
 export const APP_VERSION = '1.0.0';
+
+// Ensure all DOM event assignments happen after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // --- All DOM event assignments below ---
+  if (document.getElementById('logout-btn')) {
+    document.getElementById('logout-btn').onclick = () => {
+      logoutUser();
+      isAuthorized = false;
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('login-box').style.display = 'block';
+      document.getElementById('authorize-btn').style.display = 'inline-block';
+      document.getElementById('logout-btn').style.display = 'none';
+      document.getElementById('deauthorize-btn').style.display = 'none';
+      clearForm();
+    };
+  }
+  if (document.getElementById('deauthorize-btn')) {
+    document.getElementById('deauthorize-btn').onclick = async () => {
+      const confirmed = await showConfirm('Are you sure you want to deauthorize this app from your Google account? You will need to re-authorize next time.');
+      if (confirmed) {
+        deauthorizeGoogle();
+        isAuthorized = false;
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('login-box').style.display = 'block';
+        document.getElementById('authorize-btn').style.display = 'inline-block';
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('deauthorize-btn').style.display = 'none';
+        clearForm();
+      }
+    };
+  }
+  if (document.getElementById('login-button')) {
+    document.getElementById('login-button').onclick = async () => {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const errorBox = document.getElementById('error');
+      errorBox.textContent = '';
+      if (!username || !password) {
+        await showAlert('Please enter both username and password.');
+        return;
+      }
+      try {
+        const res = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+          range: CONFIG.ADMINS_RANGE,
+        });
+        const rows = res.result.values || [];
+        const match = rows.find(row =>
+          row[1]?.trim() === username && row[2]?.trim() === password
+        );
+        if (match) {
+          const currentGoogleToken = gapi.client.getToken()?.access_token;
+          if (!currentGoogleToken) {
+            await showAlert("Google authorization token missing. Please re-authorize.");
+            document.getElementById('authorize-btn').style.display = 'inline-block';
+            return;
+          }
+          saveToken(currentGoogleToken);
+          sessionStorage.setItem('username', username);
+          showApp();
+        } else {
+          errorBox.textContent = 'Invalid username or password.';
+        }
+      } catch (err) {
+        console.error("[app.js] Login error:", err);
+        errorBox.textContent = 'Login error: ' + (err.result?.error?.message || err.message || JSON.stringify(err));
+        await showAlert('Login failed: ' + (err.result?.error?.message || err.message || "An unknown error occurred."));
+      }
+    };
+  }
+  if (document.getElementById('authorize-btn')) {
+    document.getElementById('authorize-btn').onclick = () => {
+      authorize((tokenResponse) => {
+        if (!tokenResponse.error) {
+          isAuthorized = true;
+          document.getElementById('authorize-btn').style.display = 'none';
+          document.getElementById('login-box').style.display = 'block';
+          document.getElementById('logout-btn').style.display = 'none';
+          document.getElementById('deauthorize-btn').style.display = 'none';
+        } else {
+          console.error("[app.js] Authorization error:", tokenResponse.error);
+          showAlert("Authorization failed: " + tokenResponse.error.description || tokenResponse.error);
+        }
+      });
+    };
+  }
+});
 import { CONFIG } from './config.js';
 import {
   initAuth,
