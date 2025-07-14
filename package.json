@@ -6,8 +6,5 @@
     "lint": "eslint . --ext .js",
     "format": "prettier --write ."
   },
-  "devDependencies": {
-    "eslint": "^8.0.0",
-    "prettier": "^3.0.0"
-  }
+  "devDependencies": {}
 }
