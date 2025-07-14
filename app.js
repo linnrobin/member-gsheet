@@ -1,4 +1,6 @@
 //app.js
+// Versioning
+export const APP_VERSION = '1.0.0';
 import { CONFIG } from './config.js';
 import {
   initAuth,
@@ -48,6 +50,24 @@ function setActiveNav(id) {
 function renderPage(page) {
   const main = document.getElementById('main-content');
   if (!main) return;
+
+  // Guard: Only allow access if authorized and logged in
+  const username = sessionStorage.getItem('username');
+  if (!isAuthorized || !username) {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('main-nav').style.display = 'none';
+    document.getElementById('login-box').style.display = 'block';
+    document.getElementById('authorize-btn').style.display = 'inline-block';
+    main.innerHTML = '';
+    window.location.hash = '';
+    return;
+  } else {
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('main-nav').style.display = '';
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('authorize-btn').style.display = 'none';
+  }
+
   // RBAC: Only allow admins to access Admins section
   if (page === 'admins' && currentUserRole !== 'admin') {
     showToast('Access denied: Admins only', 'danger');
@@ -59,7 +79,7 @@ function renderPage(page) {
       setActiveNav('nav-dashboard');
       break;
     case 'users':
-      main.innerHTML = `<h2 class="h4 mb-3">User List</h2><div id="user-table-container"></div>`;
+      main.innerHTML = '';
       setActiveNav('nav-users');
       showApp();
       break;
@@ -502,14 +522,7 @@ function openChangePasswordModal(index, row) {
     // Pagination controls
     renderPagination(page, totalPages, pageSize);
 
-    // Add button for new user (navigates to user-form.html)
-    const addBtnRow = document.createElement('tr');
-    const addBtnCell = document.createElement('td');
-    addBtnCell.colSpan = headers.length + 1;
-    addBtnCell.className = 'text-end';
-    addBtnCell.innerHTML = '<a href="user-form.html" id="add-user-btn" class="btn btn-success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus" viewBox="0 0 16 16"><path d="M8 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a.5.5 0 0 1 .5.5V6h1.5a.5.5 0 0 1 0 1H12.5v1.5a.5.5 0 0 1-1 0V7H10a.5.5 0 0 1 0-1h1.5V4.5a.5.5 0 0 1 .5-.5z"/><path d="M2 13s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2zm13-1c0-1-3-3-6-3s-6 2-6 3h12z"/></svg> Add User</a>';
-    addBtnRow.appendChild(addBtnCell);
-    tbody.appendChild(addBtnRow);
+    // (Add User button is now above the table in index.html)
   } catch (error) {
     console.error("[app.js] Error fetching users:", error);
     showAlert("Error loading users: " + (error.message || JSON.stringify(error)));

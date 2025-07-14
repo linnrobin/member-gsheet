@@ -11,7 +11,10 @@
 
   <!-- Side Navigation Panel -->
   <nav id="main-nav" class="side-panel open" aria-label="Main navigation">
-    <h2 class="h5 mb-4">Menu</h2>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h5 mb-0">Menu</h2>
+      <span class="badge bg-secondary" id="app-version-badge">v1.0.0</span>
+    </div>
     <ul class="nav flex-column mb-auto">
       <li class="nav-item"><a href="#" class="nav-link" id="nav-dashboard">Dashboard</a></li>
       <li class="nav-item"><a href="#" class="nav-link" id="nav-users">Users</a></li>
@@ -45,7 +48,10 @@
     </div>
 
     <div id="app" style="display: none;">
-      <h2 class="h4 mb-3">User List</h2>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h4 mb-0">User List</h2>
+        <a href="user-form.html" id="add-user-btn" class="btn btn-success"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus" viewBox="0 0 16 16"><path d="M8 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a.5.5 0 0 1 .5.5V6h1.5a.5.5 0 0 1 0 1H12.5v1.5a.5.5 0 0 1-1 0V7H10a.5.5 0 0 1 0-1h1.5V4.5a.5.5 0 0 1 .5-.5z"/><path d="M2 13s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2zm13-1c0-1-3-3-6-3s-6 2-6 3h12z"/></svg> Add User</a>
+      </div>
       <div class="table-responsive">
         <table class="table table-striped table-hover table-bordered">
           <thead class="table-dark">
@@ -108,6 +114,11 @@
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script type="module">
+    import { APP_VERSION } from './app.js';
+    const badge = document.getElementById('app-version-badge');
+    if (badge) badge.textContent = `v${APP_VERSION}`;
+  </script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
