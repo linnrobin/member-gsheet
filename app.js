@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.26';
+export const APP_VERSION = '1.0.27';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -591,6 +591,13 @@ const sideUserRole = document.getElementById('side-user-role');
 const sideFormError = document.getElementById('side-form-error');
 
 function openSidePanel(mode, row = [], index = '') {
+  // Check if user is authorized and logged in
+  const username = sessionStorage.getItem('username');
+  if (!isAuthorized || !username) {
+    showToast('Please log in to access user management.', 'warning');
+    return;
+  }
+  
   // Wait for elements to be available (retry mechanism)
   const maxRetries = 10;
   let retryCount = 0;
