@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.25';
+export const APP_VERSION = '1.0.26';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -591,43 +591,61 @@ const sideUserRole = document.getElementById('side-user-role');
 const sideFormError = document.getElementById('side-form-error');
 
 function openSidePanel(mode, row = [], index = '') {
-  const sidePanel = document.getElementById('side-panel');
-  const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
-  const sidePanelTitle = document.getElementById('side-panel-title');
-  const sideUserIndex = document.getElementById('side-user-index');
-  const sideUserUsername = document.getElementById('side-user-username');
-  const sideUserPassword = document.getElementById('side-user-password');
-  const sideUserRole = document.getElementById('side-user-role');
-  const sideFormError = document.getElementById('side-form-error');
-
-  if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
-      !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
-    console.error('[openSidePanel] Required side panel elements not found');
-    showToast('Error opening user form. Please refresh the page.', 'danger');
-    return;
-  }
-
-  sidePanel.classList.add('open');
-  sidePanelBackdrop.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  // Wait for elements to be available (retry mechanism)
+  const maxRetries = 10;
+  let retryCount = 0;
   
-  if (mode === 'edit') {
-    sidePanelTitle.textContent = 'Edit User';
-    sideUserIndex.value = index;
-    sideUserUsername.value = row[0] || '';
-    sideUserPassword.value = row[1] || '';
-    sideUserRole.value = row[2] || '';
-  } else {
-    sidePanelTitle.textContent = 'Add User';
-    sideUserIndex.value = '';
-    sideUserUsername.value = '';
-    sideUserPassword.value = '';
-    sideUserRole.value = '';
-  }
-  sideFormError.textContent = '';
-  setTimeout(() => {
-    if (sideUserUsername) sideUserUsername.focus();
-  }, 100);
+  const tryOpen = () => {
+    const sidePanel = document.getElementById('side-panel');
+    const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
+    const sidePanelTitle = document.getElementById('side-panel-title');
+    const sideUserIndex = document.getElementById('side-user-index');
+    const sideUserUsername = document.getElementById('side-user-username');
+    const sideUserPassword = document.getElementById('side-user-password');
+    const sideUserRole = document.getElementById('side-user-role');
+    const sideFormError = document.getElementById('side-form-error');
+
+    if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
+        !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
+      
+      retryCount++;
+      if (retryCount < maxRetries) {
+        console.log(`[openSidePanel] Retry ${retryCount}/${maxRetries} - waiting for elements...`);
+        setTimeout(tryOpen, 100); // Wait 100ms and try again
+        return;
+      }
+      
+      console.error('[openSidePanel] Required side panel elements not found after retries');
+      debugSidePanelElements(); // Debug what's missing
+      showToast('Error opening user form. Please refresh the page.', 'danger');
+      return;
+    }
+
+    // All elements found, proceed with opening
+    sidePanel.classList.add('open');
+    sidePanelBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    
+    if (mode === 'edit') {
+      sidePanelTitle.textContent = 'Edit User';
+      sideUserIndex.value = index;
+      sideUserUsername.value = row[0] || '';
+      sideUserPassword.value = row[1] || '';
+      sideUserRole.value = row[2] || '';
+    } else {
+      sidePanelTitle.textContent = 'Add User';
+      sideUserIndex.value = '';
+      sideUserUsername.value = '';
+      sideUserPassword.value = '';
+      sideUserRole.value = '';
+    }
+    sideFormError.textContent = '';
+    setTimeout(() => {
+      if (sideUserUsername) sideUserUsername.focus();
+    }, 100);
+  };
+  
+  tryOpen();
 }
 
 function closeSidePanel() {
@@ -722,6 +740,15 @@ window.onload = () => {
   
   // Inject helpers into user.js to avoid circular imports
   setUserHelpers({ showToast, showAlert });
+  
+  // Setup Add User button to use side panel
+  const addUserBtn = document.getElementById('add-user-btn');
+  if (addUserBtn) {
+    addUserBtn.onclick = (e) => {
+      e.preventDefault();
+      openSidePanel('add');
+    };
+  }
   
   initAuth(async () => {
     const savedToken = getSavedToken();
@@ -1032,7 +1059,7 @@ async function renderDashboard() {
                 <a href="#settings" class="btn btn-outline-secondary">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear me-1" viewBox="0 0 16 16">
                     <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a.873.873 0 0 1 1.255-.52l.094-.319z"/>
+                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
                   </svg>
                   Settings
                 </a>
@@ -1197,7 +1224,7 @@ async function renderUserDetailPage(userIndex) {
             <div class="card-body">
               <div class="d-grid gap-2">
                 <button class="btn btn-warning" onclick="openChangePasswordModalFromDetail(${userIndex}, '${username}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8  10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
                   Change Password
                 </button>
                 <button class="btn btn-info" onclick="openSidePanelFromDetail(${userIndex})">
@@ -1307,3 +1334,32 @@ function logUserAction(action, details = '') {
     });
   });
 }
+
+// Debug function to check side panel elements
+function debugSidePanelElements() {
+  const elements = {
+    'side-panel': document.getElementById('side-panel'),
+    'side-panel-backdrop': document.getElementById('side-panel-backdrop'),
+    'side-panel-title': document.getElementById('side-panel-title'),
+    'side-user-index': document.getElementById('side-user-index'),
+    'side-user-username': document.getElementById('side-user-username'),
+    'side-user-password': document.getElementById('side-user-password'),
+    'side-user-role': document.getElementById('side-user-role'),
+    'side-form-error': document.getElementById('side-form-error'),
+    'side-user-form': document.getElementById('side-user-form')
+  };
+  
+  console.log('[debugSidePanelElements] Element status:');
+  Object.entries(elements).forEach(([id, element]) => {
+    if (element) {
+      console.log(`✓ ${id}: found (display: ${getComputedStyle(element).display}, visibility: ${getComputedStyle(element).visibility})`);
+    } else {
+      console.log(`✗ ${id}: NOT FOUND`);
+    }
+  });
+  
+  return elements;
+}
+
+// Make debug function available globally for testing
+window.debugSidePanelElements = debugSidePanelElements;
