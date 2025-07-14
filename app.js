@@ -1,6 +1,6 @@
-cd \"$(dirname \"$0\")/..\"//app.js
+//app.js
 // Versioning
-export const APP_VERSION = '1.0.2';
+export const APP_VERSION = '1.0.3';
 
 // Ensure all DOM event assignments happen after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
