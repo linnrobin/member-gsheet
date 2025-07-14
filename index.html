@@ -15,25 +15,80 @@
       <h2 class="h5 mb-0">Menu</h2>
       <span class="badge bg-secondary" id="app-version-badge">v1.0.0</span>
     </div>
-    <ul class="nav flex-column mb-auto">
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-dashboard">Dashboard</a></li>
-      <li class="nav-item dropdown">
-        <a href="#" class="nav-link dropdown-toggle" id="nav-users-dropdown" data-bs-toggle="dropdown" role="button" aria-expanded="false">Users</a>
-        <ul class="dropdown-menu" aria-labelledby="nav-users-dropdown">
-          <li><a class="dropdown-item" href="#users" id="nav-users">User List</a></li>
-          <li><a class="dropdown-item" href="#roles" id="nav-roles">User Level</a></li>
-        </ul>
-      </li>
-      <li class="nav-item dropdown">
-        <a href="#" class="nav-link dropdown-toggle" id="nav-admins-dropdown" data-bs-toggle="dropdown" role="button" aria-expanded="false">Admins</a>
-        <ul class="dropdown-menu" aria-labelledby="nav-admins-dropdown">
-          <li><a class="dropdown-item" href="#admins" id="nav-admins">Admin List</a></li>
-          <li><a class="dropdown-item" href="#rbac" id="nav-admin-roles">Admin Role</a></li>
-        </ul>
-      </li>
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-activity-log">Activity Log</a></li>
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-settings">Settings</a></li>
-    </ul>
+    <div class="accordion" id="nav-accordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-dashboard">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-dashboard" aria-expanded="false" aria-controls="collapse-dashboard">
+            Dashboard
+          </button>
+        </h2>
+        <div id="collapse-dashboard" class="accordion-collapse collapse" aria-labelledby="heading-dashboard" data-bs-parent="#nav-accordion">
+          <div class="accordion-body p-0">
+            <ul class="nav flex-column">
+              <li class="nav-item"><a href="#" class="nav-link" id="nav-dashboard">Dashboard</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-users">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-users" aria-expanded="false" aria-controls="collapse-users">
+            Users
+          </button>
+        </h2>
+        <div id="collapse-users" class="accordion-collapse collapse" aria-labelledby="heading-users" data-bs-parent="#nav-accordion">
+          <div class="accordion-body p-0">
+            <ul class="nav flex-column">
+              <li class="nav-item"><a class="nav-link" href="#users" id="nav-users">User List</a></li>
+              <li class="nav-item"><a class="nav-link" href="#roles" id="nav-roles">User Level</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-admins">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-admins" aria-expanded="false" aria-controls="collapse-admins">
+            Admins
+          </button>
+        </h2>
+        <div id="collapse-admins" class="accordion-collapse collapse" aria-labelledby="heading-admins" data-bs-parent="#nav-accordion">
+          <div class="accordion-body p-0">
+            <ul class="nav flex-column">
+              <li class="nav-item"><a class="nav-link" href="#admins" id="nav-admins">Admin List</a></li>
+              <li class="nav-item"><a class="nav-link" href="#rbac" id="nav-admin-roles">Admin Role</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-activity-log">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-activity-log" aria-expanded="false" aria-controls="collapse-activity-log">
+            Activity Log
+          </button>
+        </h2>
+        <div id="collapse-activity-log" class="accordion-collapse collapse" aria-labelledby="heading-activity-log" data-bs-parent="#nav-accordion">
+          <div class="accordion-body p-0">
+            <ul class="nav flex-column">
+              <li class="nav-item"><a class="nav-link" href="#" id="nav-activity-log">Activity Log</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-settings">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-settings" aria-expanded="false" aria-controls="collapse-settings">
+            Settings
+          </button>
+        </h2>
+        <div id="collapse-settings" class="accordion-collapse collapse" aria-labelledby="heading-settings" data-bs-parent="#nav-accordion">
+          <div class="accordion-body p-0">
+            <ul class="nav flex-column">
+              <li class="nav-item"><a class="nav-link" href="#" id="nav-settings">Settings</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="mt-auto pt-4 border-top">
       <button id="deauthorize-btn" class="btn btn-outline-danger btn-sm w-100 mb-2">Deauthorize</button>
       <button id="logout-btn" class="btn btn-outline-secondary btn-sm w-100">Logout</button>

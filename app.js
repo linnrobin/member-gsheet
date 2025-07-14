@@ -437,27 +437,8 @@ function setupNavigation() {
     'nav-activity-log': 'activity',
     'nav-settings': 'settings',
   };
-  // Main nav links
-  ['nav-dashboard', 'nav-activity-log', 'nav-settings'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.onclick = (e) => {
-        e.preventDefault();
-        window.location.hash = navMap[id];
-      };
-    }
-  });
-  // Dropdown nav links
-  ['nav-users', 'nav-roles'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.onclick = (e) => {
-        e.preventDefault();
-        window.location.hash = navMap[id];
-      };
-    }
-  });
-  ['nav-admins', 'nav-admin-roles'].forEach(id => {
+  // All nav links (accordion or not)
+  ['nav-dashboard', 'nav-users', 'nav-roles', 'nav-admins', 'nav-admin-roles', 'nav-activity-log', 'nav-settings'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.onclick = (e) => {
