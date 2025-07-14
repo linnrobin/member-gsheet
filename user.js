@@ -5,7 +5,16 @@ let showToast, showAlert;
 
 // Helper to get current user (assumes global currentUser or similar)
 function getCurrentUser() {
-  return window.currentUser?.username || 'unknown';
+  // Defensive: always return a string, never undefined/null
+  if (window.currentUser && typeof window.currentUser.username === 'string' && window.currentUser.username.trim() !== '') {
+    return window.currentUser.username;
+  }
+  // Try sessionStorage fallback
+  const sessionUser = sessionStorage.getItem('username');
+  if (sessionUser && sessionUser.trim() !== '') {
+    return sessionUser;
+  }
+  return 'unknown';
 }
 
 // Helper to get current time in readable format

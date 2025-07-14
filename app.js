@@ -154,8 +154,7 @@ function renderPage(page) {
   if (!isAuthorized || !username) {
     const appEl = document.getElementById('app');
     if (appEl) appEl.style.display = 'none';
-    const navEl = document.getElementById('main-nav');
-    if (navEl) navEl.style.display = 'none';
+    // Do NOT hide the navbar, keep it visible for all states
     const loginBox = document.getElementById('login-box');
     if (loginBox) loginBox.style.display = 'block';
     const authBtn = document.getElementById('authorize-btn');
