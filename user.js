@@ -49,15 +49,30 @@ export function setUserHelpers({ showToast: st, showAlert: sa }) {
 
 // --- Navbar Role/Visibility Logic ---
 export function updateNavVisibility(currentUserRole, isAuthorized) {
+  console.log('[DEBUG] updateNavVisibility:', { currentUserRole, isAuthorized });
   // Hide admin links if not admin or not authorized
   const adminLinks = [
     document.getElementById('nav-admins'),
     document.getElementById('nav-admin-roles'),
     document.getElementById('nav-activity-admin-log')
   ];
+  const shouldShowAdmin = (isAuthorized && currentUserRole === 'admin');
+  console.log('[DEBUG] Should show admin links:', shouldShowAdmin);
+  
+  // Hide/show individual admin links
   adminLinks.forEach(link => {
-    if (link) link.style.display = (isAuthorized && currentUserRole === 'admin') ? '' : 'none';
+    if (link) {
+      link.style.display = shouldShowAdmin ? '' : 'none';
+      console.log('[DEBUG] Link', link.id, 'display set to:', link.style.display);
+    }
   });
+  
+  // Hide/show the entire admin accordion if no admin links are visible
+  const adminAccordion = document.querySelector('#nav-accordion-admins').closest('li.nav-item');
+  if (adminAccordion) {
+    adminAccordion.style.display = shouldShowAdmin ? '' : 'none';
+    console.log('[DEBUG] Admin accordion display set to:', adminAccordion.style.display);
+  }
 }
 
 // --- User Table Rendering & UI Logic ---

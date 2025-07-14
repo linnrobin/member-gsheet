@@ -645,6 +645,8 @@ function clearForm() {
 window.onload = () => {
   console.log('[app.js] Window loaded. Initializing auth...');
   setupNavigation();
+  // Initialize navigation visibility for non-logged-in state
+  updateNavVisibility(null, false);
   initAuth(async () => {
     const savedToken = getSavedToken();
     const savedUser = sessionStorage.getItem('username');
