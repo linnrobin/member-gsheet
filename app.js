@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.24';
+export const APP_VERSION = '1.0.25';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -591,29 +591,51 @@ const sideUserRole = document.getElementById('side-user-role');
 const sideFormError = document.getElementById('side-form-error');
 
 function openSidePanel(mode, row = [], index = '') {
+  const sidePanel = document.getElementById('side-panel');
+  const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
+  const sidePanelTitle = document.getElementById('side-panel-title');
+  const sideUserIndex = document.getElementById('side-user-index');
+  const sideUserUsername = document.getElementById('side-user-username');
+  const sideUserPassword = document.getElementById('side-user-password');
+  const sideUserRole = document.getElementById('side-user-role');
+  const sideFormError = document.getElementById('side-form-error');
+
+  if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
+      !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
+    console.error('[openSidePanel] Required side panel elements not found');
+    showToast('Error opening user form. Please refresh the page.', 'danger');
+    return;
+  }
+
   sidePanel.classList.add('open');
   sidePanelBackdrop.classList.add('open');
   document.body.style.overflow = 'hidden';
+  
   if (mode === 'edit') {
-    document.getElementById('side-panel-title').textContent = 'Edit User';
+    sidePanelTitle.textContent = 'Edit User';
     sideUserIndex.value = index;
     sideUserUsername.value = row[0] || '';
     sideUserPassword.value = row[1] || '';
     sideUserRole.value = row[2] || '';
   } else {
-    document.getElementById('side-panel-title').textContent = 'Add User';
+    sidePanelTitle.textContent = 'Add User';
     sideUserIndex.value = '';
     sideUserUsername.value = '';
     sideUserPassword.value = '';
     sideUserRole.value = '';
   }
   sideFormError.textContent = '';
-  setTimeout(() => sideUserUsername.focus(), 100);
+  setTimeout(() => {
+    if (sideUserUsername) sideUserUsername.focus();
+  }, 100);
 }
 
 function closeSidePanel() {
-  sidePanel.classList.remove('open');
-  sidePanelBackdrop.classList.remove('open');
+  const sidePanel = document.getElementById('side-panel');
+  const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
+  
+  if (sidePanel) sidePanel.classList.remove('open');
+  if (sidePanelBackdrop) sidePanelBackdrop.classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -624,6 +646,18 @@ if (document.getElementById('side-cancel-user-btn')) document.getElementById('si
 if (sideUserForm) {
   sideUserForm.onsubmit = async (e) => {
     e.preventDefault();
+    const sideFormError = document.getElementById('side-form-error');
+    const sideUserIndex = document.getElementById('side-user-index');
+    const sideUserUsername = document.getElementById('side-user-username');
+    const sideUserPassword = document.getElementById('side-user-password');
+    const sideUserRole = document.getElementById('side-user-role');
+    
+    if (!sideFormError || !sideUserIndex || !sideUserUsername || !sideUserPassword || !sideUserRole) {
+      console.error('[sideUserForm.onsubmit] Required form elements not found');
+      showToast('Error processing form. Please refresh the page.', 'danger');
+      return;
+    }
+    
     sideFormError.textContent = '';
     const index = sideUserIndex.value;
     let username = sideUserUsername.value.trim().toLowerCase();
@@ -650,7 +684,7 @@ if (sideUserForm) {
       closeSidePanel();
       showApp();
     } catch (err) {
-      sideFormError.textContent = 'Error saving user.';
+      if (sideFormError) sideFormError.textContent = 'Error saving user.';
       showToast('Error saving user.', 'danger');
       console.error(err);
     }
