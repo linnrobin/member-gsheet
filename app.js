@@ -312,8 +312,10 @@ async function showApp(page = 1, pageSize = 10) {
 
   try {
     const users = await fetchUsers();
-    const thead = document.querySelector('#user-body').parentElement.querySelector('thead');
-    const tbody = document.getElementById('user-body');
+    const userBody = document.querySelector('#user-body');
+    const thead = userBody && userBody.parentElement ? userBody.parentElement.querySelector('thead') : null;
+    const tbody = userBody;
+    if (!tbody) return; // Defensive: don't proceed if tbody is missing
     tbody.replaceChildren();
 
     if (!users || users.length === 0) {
