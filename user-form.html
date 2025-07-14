@@ -7,7 +7,24 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container mt-5">
+  <!-- Side Navigation Panel -->
+  <nav id="main-nav" class="side-panel open" aria-label="Main navigation">
+    <h2 class="h5 mb-4">Menu</h2>
+    <ul class="nav flex-column mb-auto">
+      <li class="nav-item"><a href="index.html" class="nav-link" id="nav-dashboard">Dashboard</a></li>
+      <li class="nav-item"><a href="index.html" class="nav-link" id="nav-users">Users</a></li>
+      <li class="nav-item"><a href="index.html" class="nav-link" id="nav-roles">User Levels</a></li>
+      <li class="nav-item"><a href="index.html" class="nav-link" id="nav-admin-roles">Admin Role Permission</a></li>
+      <li class="nav-item"><a href="index.html" class="nav-link" id="nav-activity-log">Activity Log</a></li>
+      <li class="nav-item"><a href="index.html" class="nav-link" id="nav-settings">Settings</a></li>
+    </ul>
+    <div class="mt-auto pt-4 border-top">
+      <button id="deauthorize-btn" class="btn btn-outline-danger btn-sm w-100 mb-2">Deauthorize</button>
+      <button id="logout-btn" class="btn btn-outline-secondary btn-sm w-100">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container mt-5">
     <h2 id="form-title" class="mb-4">User Form</h2>
     <form id="user-form" class="card p-4">
       <input id="user-index" type="hidden" />
@@ -29,7 +46,10 @@
       </div>
       <div id="form-error" class="text-danger mt-2"></div>
     </form>
-  </div>
+  </main>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script type="module" src="user-form.js"></script>
 </body>
 </html>

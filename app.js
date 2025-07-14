@@ -19,11 +19,13 @@ import {
 import { validateUser } from './validation.js';
 
 let isAuthorized = false; // Tracks authorization state
+let currentUserRole = null; // Tracks current user's role
 
 // --- Navigation & Routing ---
 const NAV_ROUTES = {
   dashboard: 'Dashboard',
   users: 'Users',
+  admins: 'Admins',
   roles: 'User Levels',
   rbac: 'Admin Role Permission',
   activity: 'Activity Log',
@@ -33,14 +35,24 @@ const NAV_ROUTES = {
 function setActiveNav(id) {
   document.querySelectorAll('#main-nav .nav-link').forEach(link => {
     link.classList.remove('active');
+    // Also remove aria-current for accessibility
+    link.removeAttribute('aria-current');
   });
   const el = document.getElementById(id);
-  if (el) el.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+    el.setAttribute('aria-current', 'page');
+  }
 }
 
 function renderPage(page) {
   const main = document.getElementById('main-content');
   if (!main) return;
+  // RBAC: Only allow admins to access Admins section
+  if (page === 'admins' && currentUserRole !== 'admin') {
+    showToast('Access denied: Admins only', 'danger');
+    return renderPage('dashboard');
+  }
   switch (page) {
     case 'dashboard':
       main.innerHTML = `<h2 class="h4 mb-3">Dashboard</h2><div class="card p-4">Welcome to the admin dashboard.</div>`;
@@ -51,11 +63,161 @@ function renderPage(page) {
       setActiveNav('nav-users');
       showApp();
       break;
+    case 'admins':
+      renderAdminsPage();
+      break;
     case 'roles':
       main.innerHTML = `<h2 class="h4 mb-3">User Levels</h2><div class="card p-4"><form id="role-form" class="mb-3"><div class="input-group"><input type="text" id="new-role" class="form-control" placeholder="Add new role" /><button class="btn btn-primary" type="submit">Add</button></div></form><ul id="role-list" class="list-group"></ul></div>`;
       setActiveNav('nav-roles');
       renderRolesPage();
       break;
+// --- Admins Page Logic ---
+function renderAdminsPage() {
+  const main = document.getElementById('main-content');
+  if (!main) return;
+  main.innerHTML = `<h2 class="h4 mb-3">Admins</h2><div id="admin-table-container"></div>`;
+  setActiveNav('nav-admins');
+  showAdmins();
+}
+
+async function showAdmins() {
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+    });
+    const admins = res.result.values || [];
+    const container = document.getElementById('admin-table-container');
+    if (!container) return;
+    let html = `<div class="table-responsive"><table class="table table-striped table-hover table-bordered"><thead class="table-dark"><tr><th>Username</th><th>Password</th><th>Role</th><th>Actions</th></tr></thead><tbody>`;
+    if (admins.length === 0) {
+      html += `<tr><td colspan="4" class="text-center">No admins found.</td></tr>`;
+    } else {
+      admins.forEach((row, idx) => {
+        html += `<tr><td>${row[1] || ''}</td><td>••••••••</td><td>${row[3] || ''}</td><td>` +
+          `<button class='btn btn-sm btn-info me-2' onclick='window.editAdmin(${idx})'>Edit</button>` +
+          `<button class='btn btn-sm btn-danger' onclick='window.deleteAdmin(${idx})'>Delete</button>` +
+          `</td></tr>`;
+      });
+    }
+    html += `</tbody></table></div>`;
+    html += `<button class="btn btn-success" id="add-admin-btn">Add Admin</button>`;
+    container.innerHTML = html;
+    document.getElementById('add-admin-btn').onclick = openAddAdminModal;
+    window.editAdmin = openEditAdminModal;
+    window.deleteAdmin = openDeleteAdminModal;
+  } catch (err) {
+    document.getElementById('admin-table-container').innerHTML = `<div class='text-danger'>Error loading admins.</div>`;
+    console.error(err);
+  }
+}
+
+function openAddAdminModal() {
+  openAdminModal('add');
+}
+function openEditAdminModal(idx) {
+  openAdminModal('edit', idx);
+}
+function openDeleteAdminModal(idx) {
+  if (confirm('Delete this admin?')) {
+    deleteAdmin(idx);
+  }
+}
+
+function openAdminModal(mode, idx) {
+  // Simple prompt for demo; replace with modal for production
+  let username = '';
+  let password = '';
+  let role = '';
+  if (mode === 'edit') {
+    // Fetch current admin data
+    gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+    }).then(res => {
+      const admins = res.result.values || [];
+      const admin = admins[idx];
+      if (!admin) return;
+      username = admin[1] || '';
+      password = '';
+      role = admin[3] || '';
+      promptAndSaveAdmin(mode, idx, username, password, role);
+    });
+  } else {
+    promptAndSaveAdmin(mode, idx, username, password, role);
+  }
+}
+
+function promptAndSaveAdmin(mode, idx, username, password, role) {
+  username = prompt('Admin username:', username) || '';
+  if (!username) return;
+  password = prompt('Admin password (leave blank to keep unchanged):', password) || '';
+  role = prompt('Admin role:', role) || '';
+  if (!role) return;
+  // Hash password if provided
+  let hashedPassword = '';
+  if (password) {
+    const salt = bcrypt.genSaltSync(10);
+    hashedPassword = bcrypt.hashSync(password.trim(), salt);
+  }
+  saveAdmin(mode, idx, username.trim().toLowerCase(), hashedPassword, role.trim().toLowerCase());
+}
+
+async function saveAdmin(mode, idx, username, password, role) {
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+    });
+    let admins = res.result.values || [];
+    if (mode === 'add') {
+      const now = new Date().toISOString();
+      admins.push(['', username, password, role, now, now]);
+    } else if (mode === 'edit') {
+      if (admins[idx]) {
+        if (password) admins[idx][2] = password;
+        admins[idx][1] = username;
+        admins[idx][3] = role;
+        admins[idx][4] = admins[idx][4] || new Date().toISOString();
+        admins[idx][5] = new Date().toISOString();
+      }
+    }
+    // Write back to sheet
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+      valueInputOption: 'RAW',
+      resource: { values: admins },
+    });
+    showToast('Admin saved!', 'success');
+    showAdmins();
+  } catch (err) {
+    showToast('Error saving admin.', 'danger');
+    console.error(err);
+  }
+}
+
+async function deleteAdmin(idx) {
+  try {
+    const res = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+    });
+    let admins = res.result.values || [];
+    admins.splice(idx, 1);
+    await gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+      range: CONFIG.ADMINS_RANGE,
+      valueInputOption: 'RAW',
+      resource: { values: admins },
+    });
+    showToast('Admin deleted!', 'success');
+    showAdmins();
+  } catch (err) {
+    showToast('Error deleting admin.', 'danger');
+    console.error(err);
+  }
+}
     case 'rbac':
       main.innerHTML = `<h2 class="h4 mb-3">Admin Role Permission</h2><div class="card p-4"><div id="rbac-content">(Coming soon) Configure role-based access control.</div></div>`;
       setActiveNav('nav-admin-roles');
@@ -158,12 +320,31 @@ function renderSettingsPage() {
 }
 
 function setupNavigation() {
-  document.getElementById('nav-dashboard').onclick = (e) => { e.preventDefault(); renderPage('dashboard'); };
-  document.getElementById('nav-users').onclick = (e) => { e.preventDefault(); renderPage('users'); };
-  document.getElementById('nav-roles').onclick = (e) => { e.preventDefault(); renderPage('roles'); };
-  document.getElementById('nav-admin-roles').onclick = (e) => { e.preventDefault(); renderPage('rbac'); };
-  document.getElementById('nav-activity-log').onclick = (e) => { e.preventDefault(); renderPage('activity'); };
-  document.getElementById('nav-settings').onclick = (e) => { e.preventDefault(); renderPage('settings'); };
+  // SPA-style navigation: update hash and listen for hashchange
+  const navMap = {
+    'nav-dashboard': 'dashboard',
+    'nav-users': 'users',
+    'nav-admins': 'admins',
+    'nav-roles': 'roles',
+    'nav-admin-roles': 'rbac',
+    'nav-activity-log': 'activity',
+    'nav-settings': 'settings',
+  };
+  Object.keys(navMap).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.onclick = (e) => {
+        e.preventDefault();
+        window.location.hash = navMap[id];
+      };
+    }
+  });
+  // On hash change, render the correct page
+  window.addEventListener('hashchange', () => {
+    const page = window.location.hash.replace(/^#/, '') || 'dashboard';
+    renderPage(page);
+  });
+}
 }
 
 
@@ -479,14 +660,41 @@ function clearForm() {
 window.onload = () => {
   console.log('[app.js] Window loaded. Initializing auth...');
   setupNavigation();
-  initAuth(() => {
+  initAuth(async () => {
     const savedToken = getSavedToken();
     const savedUser = sessionStorage.getItem('username');
     if (savedToken && savedUser) {
       gapi.client.setToken({ access_token: savedToken });
       isAuthorized = true;
+      // Fetch user role from users/admins sheet
+      let role = null;
+      try {
+        // Try users sheet first
+        const usersRes = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: CONFIG.USERS_SHEET_ID,
+          range: CONFIG.USERS_RANGE,
+        });
+        const users = usersRes.result.values || [];
+        const userRow = users.find(row => row[0] && row[0].toLowerCase() === savedUser.toLowerCase());
+        if (userRow) role = userRow[2];
+        // If not found, try admins sheet
+        if (!role) {
+          const adminsRes = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+            range: CONFIG.ADMINS_RANGE,
+          });
+          const admins = adminsRes.result.values || [];
+          const adminRow = admins.find(row => row[1] && row[1].toLowerCase() === savedUser.toLowerCase());
+          if (adminRow) role = adminRow[3];
+        }
+      } catch (e) {
+        console.error('Error fetching user role:', e);
+      }
+      currentUserRole = (role || '').toLowerCase();
       document.getElementById('authorize-btn').style.display = 'none';
-      renderPage('dashboard');
+      // SPA: render page from hash or dashboard
+      const page = window.location.hash.replace(/^#/, '') || 'dashboard';
+      renderPage(page);
     } else {
       document.getElementById('authorize-btn').style.display = 'inline-block';
       document.getElementById('authorize-btn').disabled = false;
