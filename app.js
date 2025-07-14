@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.3';
+export const APP_VERSION = '1.0.22';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -188,7 +188,8 @@ import {
   updateUser,
   deleteUserAt,
   updateNavVisibility,
-  openChangePasswordModal
+  openChangePasswordModal,
+  setUserHelpers
 } from './user.js?v=2';
 
 import { validateUser } from './validation.js';
@@ -510,11 +511,17 @@ async function showApp(page = 1, pageSize = 10) {
   } catch (error) {
     console.error("[app.js] Error fetching users:", error);
     showAlert("Error loading users: " + (error.message || JSON.stringify(error)));
-    document.getElementById('login-box').style.display = 'block';
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('authorize-btn').style.display = 'inline-block';
-    document.getElementById('logout-btn').style.display = 'none';
-    document.getElementById('deauthorize-btn').style.display = 'none';
+    const loginBox = document.getElementById('login-box');
+    const appDiv = document.getElementById('app');
+    const authBtn = document.getElementById('authorize-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const deauthBtn = document.getElementById('deauthorize-btn');
+    
+    if (loginBox) loginBox.style.display = 'block';
+    if (appDiv) appDiv.style.display = 'none';
+    if (authBtn) authBtn.style.display = 'inline-block';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (deauthBtn) deauthBtn.style.display = 'none';
   }
 }
 
@@ -527,18 +534,29 @@ function formatDate(isoString) {
 }
 
 function renderPagination(current, total, pageSize) {
-  let pagination = document.getElementById('pagination-controls');
-  if (!pagination) {
-    pagination = document.createElement('div');
-    pagination.id = 'pagination-controls';
-    pagination.className = 'd-flex justify-content-between align-items-center my-2';
-    document.getElementById('app').appendChild(pagination);
+  // Remove existing pagination first
+  const existingPagination = document.getElementById('pagination-controls');
+  if (existingPagination) {
+    existingPagination.remove();
   }
-  pagination.innerHTML = '';
+
+  let pagination = document.createElement('div');
+  pagination.id = 'pagination-controls';
+  pagination.className = 'd-flex justify-content-between align-items-center my-2';
+  
+  const mainContent = document.getElementById('main-content');
+  if (!mainContent) {
+    console.error('[renderPagination] main-content element not found');
+    return;
+  }
+  
+  mainContent.appendChild(pagination);
+
   // Entries info
   const info = document.createElement('span');
   info.textContent = `Page ${current} of ${total}`;
   pagination.appendChild(info);
+  
   // Page buttons
   const nav = document.createElement('nav');
   const ul = document.createElement('ul');
@@ -667,6 +685,10 @@ function clearForm() {
 window.onload = () => {
   console.log('[app.js] Window loaded. Initializing auth...');
   setupNavigation();
+  
+  // Inject helpers into user.js to avoid circular imports
+  setUserHelpers({ showToast, showAlert });
+  
   initAuth(async () => {
     const savedToken = getSavedToken();
     const savedUser = sessionStorage.getItem('username');
