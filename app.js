@@ -10,11 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('logout-btn').onclick = () => {
       logoutUser();
       isAuthorized = false;
-      document.getElementById('app').style.display = 'none';
-      document.getElementById('login-box').style.display = 'block';
-      document.getElementById('authorize-btn').style.display = 'inline-block';
-      document.getElementById('logout-btn').style.display = 'none';
-      document.getElementById('deauthorize-btn').style.display = 'none';
+      const appDiv = document.getElementById('app');
+      if (appDiv) appDiv.style.display = 'none';
+      const loginBox = document.getElementById('login-box');
+      if (loginBox) loginBox.style.display = 'block';
+      const authBtn = document.getElementById('authorize-btn');
+      if (authBtn) authBtn.style.display = 'inline-block';
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      const deauthBtn = document.getElementById('deauthorize-btn');
+      if (deauthBtn) deauthBtn.style.display = 'none';
       clearForm();
     };
   }
@@ -24,11 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (confirmed) {
         deauthorizeGoogle();
         isAuthorized = false;
-        document.getElementById('app').style.display = 'none';
-        document.getElementById('login-box').style.display = 'block';
-        document.getElementById('authorize-btn').style.display = 'inline-block';
-        document.getElementById('logout-btn').style.display = 'none';
-        document.getElementById('deauthorize-btn').style.display = 'none';
+        const appDiv = document.getElementById('app');
+        if (appDiv) appDiv.style.display = 'none';
+        const loginBox = document.getElementById('login-box');
+        if (loginBox) loginBox.style.display = 'block';
+        const authBtn = document.getElementById('authorize-btn');
+        if (authBtn) authBtn.style.display = 'inline-block';
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        const deauthBtn = document.getElementById('deauthorize-btn');
+        if (deauthBtn) deauthBtn.style.display = 'none';
         clearForm();
       }
     };
