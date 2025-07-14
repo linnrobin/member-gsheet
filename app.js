@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.27';
+export const APP_VERSION = '1.0.28';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
