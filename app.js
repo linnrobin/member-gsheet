@@ -1,3 +1,27 @@
+// --- Settings Page Logic ---
+function renderSettingsPage() {
+  const form = document.getElementById('change-password-form');
+  const errorBox = document.getElementById('settings-form-error');
+  if (!form) return;
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    errorBox.textContent = '';
+    const currentPwd = document.getElementById('current-password').value.trim();
+    const newPwd = document.getElementById('new-password').value.trim();
+    if (!currentPwd || !newPwd) {
+      errorBox.textContent = 'Please fill in both fields.';
+      return;
+    }
+    if (newPwd.length < 6) {
+      errorBox.textContent = 'New password must be at least 6 characters.';
+      return;
+    }
+    // You can add logic here to verify current password and update it in your backend
+    // For now, just show a success toast
+    showToast('Password change feature coming soon!', 'primary');
+    form.reset();
+  };
+}
 //app.js
 // Versioning
 export const APP_VERSION = '1.0.3';
@@ -113,7 +137,8 @@ import {
   fetchUsers,
   appendUser,
   updateUser,
-  deleteUserAt
+  deleteUserAt,
+  updateNavVisibility
 } from './user.js';
 
 import { validateUser } from './validation.js';
@@ -146,12 +171,15 @@ function setActiveNav(id) {
 }
 
 function renderPage(page) {
+  // Update nav visibility on every page render
+  updateNavVisibility(currentUserRole, isAuthorized);
   const main = document.getElementById('main-content');
   if (!main) return;
 
   // Guard: Only allow access if authorized and logged in
   const username = sessionStorage.getItem('username');
   if (!isAuthorized || !username) {
+    updateNavVisibility(currentUserRole, false);
     const appEl = document.getElementById('app');
     if (appEl) appEl.style.display = 'none';
     // Do NOT hide the navbar, keep it visible for all states
@@ -163,6 +191,7 @@ function renderPage(page) {
     window.location.hash = '';
     return;
   } else {
+    updateNavVisibility(currentUserRole, true);
     const appEl = document.getElementById('app');
     if (appEl) appEl.style.display = 'block';
     const navEl = document.getElementById('main-nav');
@@ -579,11 +608,13 @@ window.onload = () => {
         console.error('Error fetching user role:', e);
       }
       currentUserRole = (role || '').toLowerCase();
+      updateNavVisibility(currentUserRole, true);
       document.getElementById('authorize-btn').style.display = 'none';
       // SPA: render page from hash or dashboard
       const page = window.location.hash.replace(/^#/, '') || 'dashboard';
       renderPage(page);
     } else {
+      updateNavVisibility(null, false);
       document.getElementById('authorize-btn').style.display = 'inline-block';
       document.getElementById('authorize-btn').disabled = false;
       document.getElementById('login-box').style.display = 'block';
@@ -597,6 +628,7 @@ document.getElementById('authorize-btn').onclick = () => {
   authorize((tokenResponse) => {
     if (!tokenResponse.error) {
       isAuthorized = true;
+      updateNavVisibility(currentUserRole, true);
       document.getElementById('authorize-btn').style.display = 'none';
       document.getElementById('login-box').style.display = 'block';
       document.getElementById('logout-btn').style.display = 'none';
@@ -640,20 +672,50 @@ document.getElementById('login-button').onclick = async () => {
 
       saveToken(currentGoogleToken);
       sessionStorage.setItem('username', username);
+      // Fetch user role after login
+      let role = null;
+      try {
+        // Try users sheet first
+        const usersRes = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: CONFIG.USERS_SHEET_ID,
+          range: CONFIG.USERS_RANGE,
+        });
+        const users = usersRes.result.values || [];
+        const userRow = users.find(row => row[0] && row[0].toLowerCase() === username.toLowerCase());
+        if (userRow) role = userRow[2];
+        // If not found, try admins sheet
+        if (!role) {
+          const adminsRes = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+            range: CONFIG.ADMINS_RANGE,
+          });
+          const admins = adminsRes.result.values || [];
+          const adminRow = admins.find(row => row[1] && row[1].toLowerCase() === username.toLowerCase());
+          if (adminRow) role = adminRow[3];
+        }
+      } catch (e) {
+        console.error('Error fetching user role after login:', e);
+      }
+      currentUserRole = (role || '').toLowerCase();
+      updateNavVisibility(currentUserRole, true);
       showApp();
     } else {
       errorBox.textContent = 'Invalid username or password.';
+      updateNavVisibility(null, false);
     }
   } catch (err) {
     console.error("[app.js] Login error:", err);
     errorBox.textContent = 'Login error: ' + (err.result?.error?.message || err.message || JSON.stringify(err));
     await showAlert('Login failed: ' + (err.result?.error?.message || err.message || "An unknown error occurred."));
+    updateNavVisibility(null, false);
   }
 };
 
 document.getElementById('logout-btn').onclick = () => {
   logoutUser();
   isAuthorized = false;
+  currentUserRole = null;
+  updateNavVisibility(null, false);
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-box').style.display = 'block';
   document.getElementById('authorize-btn').style.display = 'inline-block';
@@ -667,6 +729,8 @@ document.getElementById('deauthorize-btn').onclick = async () => {
   if (confirmed) {
     deauthorizeGoogle();
     isAuthorized = false;
+    currentUserRole = null;
+    updateNavVisibility(null, false);
     document.getElementById('app').style.display = 'none';
     document.getElementById('login-box').style.display = 'block';
     document.getElementById('authorize-btn').style.display = 'inline-block';
