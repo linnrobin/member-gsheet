@@ -122,6 +122,55 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
   }
+
+  // Hamburger menu toggle for mobile
+  const hamburger = document.getElementById('hamburger-btn');
+  const sidePanel = document.getElementById('main-nav');
+  const sidePanelBackdrop = document.querySelector('.side-panel-backdrop') || (() => {
+    // Create if not present
+    const el = document.createElement('div');
+    el.className = 'side-panel-backdrop';
+    document.body.appendChild(el);
+    return el;
+  })();
+
+  function openSidePanel() {
+    sidePanel.classList.add('open');
+    sidePanelBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidePanel() {
+    sidePanel.classList.remove('open');
+    sidePanelBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  if (hamburger) {
+    hamburger.addEventListener('click', openSidePanel);
+  }
+  if (sidePanelBackdrop) {
+    sidePanelBackdrop.addEventListener('click', closeSidePanel);
+  }
+  // Close nav on nav-link click (mobile only)
+  document.querySelectorAll('#main-nav .nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidePanel();
+    });
+  });
+  // Hide nav by default on mobile
+  if (window.innerWidth <= 768) {
+    sidePanel.classList.remove('open');
+    sidePanelBackdrop.classList.remove('open');
+  }
+  // Responsive: close nav if resizing to mobile
+  window.addEventListener('resize', () => {
+    if (window.innerWidth <= 768) {
+      sidePanel.classList.remove('open');
+      sidePanelBackdrop.classList.remove('open');
+    } else {
+      sidePanel.classList.add('open');
+      sidePanelBackdrop.classList.remove('open');
+    }
+  });
 });
 import { CONFIG } from './config.js';
 import {

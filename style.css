@@ -1,3 +1,51 @@
+/* Hamburger styles for mobile */
+.hamburger {
+  width: 44px;
+  height: 44px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.hamburger-bar {
+  width: 26px;
+  height: 3px;
+  background: #333;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+@media (max-width: 768px) {
+  #hamburger-btn {
+    display: block !important;
+  }
+  .side-panel {
+    /* already mobile-optimized */
+  }
+  .table th, .table td {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.95rem;
+  }
+  .btn, .nav-link, .page-link {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table {
+    min-width: 600px;
+  }
+}
 /* style.css */
 /* Modern, mobile-first, side-panel layout and custom overrides */
 
