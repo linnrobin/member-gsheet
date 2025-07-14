@@ -116,6 +116,42 @@ function clearToken() {
   console.log('[auth.js] Local token and username cleared.');
 }
 
+/**
+ * Checks if a token is valid by making a test API call
+ * @param {string} token - The access token to validate
+ * @returns {boolean} - True if token is valid, false otherwise
+ */
+export async function validateToken(token) {
+  if (!token) return false;
+  
+  try {
+    // Set the token temporarily for testing
+    const originalToken = gapi.client.getToken();
+    gapi.client.setToken({ access_token: token });
+    
+    // Make a simple API call to test the token
+    await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG.USERS_SHEET_ID || CONFIG.ADMINS_SHEET_ID,
+      range: 'A1:A1', // Just get first cell to test
+    });
+    
+    // Restore original token
+    if (originalToken) {
+      gapi.client.setToken(originalToken);
+    }
+    
+    return true;
+  } catch (error) {
+    console.log('[auth.js] Token validation failed:', error);
+    // Restore original token on error
+    const originalToken = gapi.client.getToken();
+    if (originalToken) {
+      gapi.client.setToken(originalToken);
+    }
+    return false;
+  }
+}
+
 function maybeEnableButton(callback) {
   if (gapiInited && gisInited && callback) callback();
 }

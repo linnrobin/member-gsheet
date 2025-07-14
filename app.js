@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.29';
+export const APP_VERSION = '1.0.30';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -106,22 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   }
-  if (document.getElementById('authorize-btn')) {
-    document.getElementById('authorize-btn').onclick = () => {
-      authorize((tokenResponse) => {
-        if (!tokenResponse.error) {
-          isAuthorized = true;
-          document.getElementById('authorize-btn').style.display = 'none';
-          document.getElementById('login-box').style.display = 'block';
-          document.getElementById('logout-btn').style.display = 'none';
-          document.getElementById('deauthorize-btn').style.display = 'none';
-        } else {
-          console.error("[app.js] Authorization error:", tokenResponse.error);
-          showAlert("Authorization failed: " + tokenResponse.error.description || tokenResponse.error);
-        }
-      });
-    };
-  }
+  // Authorize button will be set up in initAuth callback to avoid timing issues
 
   // Hamburger menu toggle for mobile
   const hamburger = document.getElementById('hamburger-btn');
@@ -733,51 +718,100 @@ window.onload = () => {
   // Inject helpers into user.js to avoid circular imports
   setUserHelpers({ showToast, showAlert });
   
-  // Setup Add User button to use side panel
-  const addUserBtn = document.getElementById('add-user-btn');
-  if (addUserBtn) {
-    addUserBtn.onclick = (e) => {
-      e.preventDefault();
-      openSidePanel('add');
-    };
-  }
-  
+  // Initialize auth first, then set up event handlers
   initAuth(async () => {
+    console.log('[app.js] Auth initialized. Setting up event handlers...');
+    
+    // Setup Add User button to use side panel
+    const addUserBtn = document.getElementById('add-user-btn');
+    if (addUserBtn) {
+      addUserBtn.onclick = (e) => {
+        e.preventDefault();
+        openSidePanel('add');
+      };
+    }
+    
+    // Setup authorize button AFTER initAuth completes
+    const authorizeBtn = document.getElementById('authorize-btn');
+    if (authorizeBtn) {
+      // Enable the button now that auth is initialized
+      authorizeBtn.disabled = false;
+      authorizeBtn.onclick = () => {
+        authorize((tokenResponse) => {
+          if (!tokenResponse.error) {
+            isAuthorized = true;
+            authorizeBtn.style.display = 'none';
+            document.getElementById('login-box').style.display = 'block';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('deauthorize-btn').style.display = 'none';
+          } else {
+            console.error("[app.js] Authorization error:", tokenResponse.error);
+            showAlert("Authorization failed: " + (tokenResponse.error.description || tokenResponse.error));
+          }
+        });
+      };
+    }
+
     const savedToken = getSavedToken();
     const savedUser = sessionStorage.getItem('username');
     if (savedToken && savedUser) {
-      gapi.client.setToken({ access_token: savedToken });
-      isAuthorized = true;
-      // Fetch user role from users/admins sheet
-      let role = null;
       try {
-        // Try users sheet first
-        const usersRes = await gapi.client.sheets.spreadsheets.values.get({
+        gapi.client.setToken({ access_token: savedToken });
+        
+        // Test token validity with a simple API call
+        await gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: CONFIG.USERS_SHEET_ID,
-          range: CONFIG.USERS_RANGE,
+          range: 'A1:A1', // Just get first cell to test
         });
-        const users = usersRes.result.values || [];
-        const userRow = users.find(row => row[0] && row[0].toLowerCase() === savedUser.toLowerCase());
-        if (userRow) role = userRow[2];
-        // If not found, try admins sheet
-        if (!role) {
-          const adminsRes = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: CONFIG.ADMINS_SHEET_ID,
-            range: CONFIG.ADMINS_RANGE,
+        
+        // Token is valid, fetch user role from users/admins sheet
+        let role = null;
+        try {
+          // Try users sheet first
+          const usersRes = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: CONFIG.USERS_SHEET_ID,
+            range: CONFIG.USERS_RANGE,
           });
-          const admins = adminsRes.result.values || [];
-          const adminRow = admins.find(row => row[1] && row[1].toLowerCase() === savedUser.toLowerCase());
-          if (adminRow) role = adminRow[3];
+          const users = usersRes.result.values || [];
+          const userRow = users.find(row => row[0] && row[0].toLowerCase() === savedUser.toLowerCase());
+          if (userRow) role = userRow[2];
+          
+          // If not found, try admins sheet
+          if (!role) {
+            const adminsRes = await gapi.client.sheets.spreadsheets.values.get({
+              spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+              range: CONFIG.ADMINS_RANGE,
+            });
+            const admins = adminsRes.result.values || [];
+            const adminRow = admins.find(row => row[1] && row[1].toLowerCase() === savedUser.toLowerCase());
+            if (adminRow) role = adminRow[3];
+          }
+        } catch (e) {
+          console.error('Error fetching user role:', e);
         }
-      } catch (e) {
-        console.error('Error fetching user role:', e);
+        
+        isAuthorized = true;
+        currentUserRole = (role || '').toLowerCase();
+        updateNavVisibility(currentUserRole, true);
+        document.getElementById('authorize-btn').style.display = 'none';
+        
+        // SPA: render page from hash or dashboard
+        const page = window.location.hash.replace(/^#/, '') || 'dashboard';
+        renderPage(page);
+      } catch (error) {
+        console.error('[app.js] Token validation failed:', error);
+        // Token is invalid or expired, clear it and show authorization
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('username');
+        gapi.client.setToken(null);
+        isAuthorized = false;
+        updateNavVisibility(null, false);
+        document.getElementById('authorize-btn').style.display = 'inline-block';
+        document.getElementById('authorize-btn').disabled = false;
+        document.getElementById('login-box').style.display = 'block';
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('deauthorize-btn').style.display = 'none';
       }
-      currentUserRole = (role || '').toLowerCase();
-      updateNavVisibility(currentUserRole, true);
-      document.getElementById('authorize-btn').style.display = 'none';
-      // SPA: render page from hash or dashboard
-      const page = window.location.hash.replace(/^#/, '') || 'dashboard';
-      renderPage(page);
     } else {
       updateNavVisibility(null, false);
       document.getElementById('authorize-btn').style.display = 'inline-block';
@@ -787,92 +821,80 @@ window.onload = () => {
       document.getElementById('deauthorize-btn').style.display = 'none';
     }
   });
-};
+  
+  // Setup login button after auth is initialized
+  const loginButton = document.getElementById('login-button');
+  if (loginButton) {
+    loginButton.onclick = async () => {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const errorBox = document.getElementById('error');
+      errorBox.textContent = '';
 
-document.getElementById('authorize-btn').onclick = () => {
-  authorize((tokenResponse) => {
-    if (!tokenResponse.error) {
-      isAuthorized = true;
-      updateNavVisibility(currentUserRole, true);
-      document.getElementById('authorize-btn').style.display = 'none';
-      document.getElementById('login-box').style.display = 'block';
-      document.getElementById('logout-btn').style.display = 'none';
-      document.getElementById('deauthorize-btn').style.display = 'none';
-    } else {
-      console.error("[app.js] Authorization error:", tokenResponse.error);
-      showAlert("Authorization failed: " + tokenResponse.error.description || tokenResponse.error);
-    }
-  });
-};
-
-document.getElementById('login-button').onclick = async () => {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value.trim();
-  const errorBox = document.getElementById('error');
-  errorBox.textContent = '';
-
-  if (!username || !password) {
-    await showAlert('Please enter both username and password.');
-    return;
-  }
-
-  try {
-    const res = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: CONFIG.ADMINS_SHEET_ID,
-      range: CONFIG.ADMINS_RANGE,
-    });
-
-    const rows = res.result.values || [];
-    const match = rows.find(row =>
-      row[1]?.trim() === username && row[2]?.trim() === password
-    );
-
-    if (match) {
-      const currentGoogleToken = gapi.client.getToken()?.access_token;
-      if (!currentGoogleToken) {
-        await showAlert("Google authorization token missing. Please re-authorize.");
-        document.getElementById('authorize-btn').style.display = 'inline-block';
+      if (!username || !password) {
+        await showAlert('Please enter both username and password.');
         return;
       }
 
-      saveToken(currentGoogleToken);
-      sessionStorage.setItem('username', username);
-      // Fetch user role after login
-      let role = null;
       try {
-        // Try users sheet first
-        const usersRes = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: CONFIG.USERS_SHEET_ID,
-          range: CONFIG.USERS_RANGE,
+        const res = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+          range: CONFIG.ADMINS_RANGE,
         });
-        const users = usersRes.result.values || [];
-        const userRow = users.find(row => row[0] && row[0].toLowerCase() === username.toLowerCase());
-        if (userRow) role = userRow[2];
-        // If not found, try admins sheet
-        if (!role) {
-          const adminsRes = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: CONFIG.ADMINS_SHEET_ID,
-            range: CONFIG.ADMINS_RANGE,
-          });
-          const admins = adminsRes.result.values || [];
-          const adminRow = admins.find(row => row[1] && row[1].toLowerCase() === username.toLowerCase());
-          if (adminRow) role = adminRow[3];
+
+        const rows = res.result.values || [];
+        const match = rows.find(row =>
+          row[1]?.trim() === username && row[2]?.trim() === password
+        );
+
+        if (match) {
+          const currentGoogleToken = gapi.client.getToken()?.access_token;
+          if (!currentGoogleToken) {
+            await showAlert("Google authorization token missing. Please re-authorize.");
+            document.getElementById('authorize-btn').style.display = 'inline-block';
+            return;
+          }
+
+          saveToken(currentGoogleToken);
+          sessionStorage.setItem('username', username);
+          // Fetch user role after login
+          let role = null;
+          try {
+            // Try users sheet first
+            const usersRes = await gapi.client.sheets.spreadsheets.values.get({
+              spreadsheetId: CONFIG.USERS_SHEET_ID,
+              range: CONFIG.USERS_RANGE,
+            });
+            const users = usersRes.result.values || [];
+            const userRow = users.find(row => row[0] && row[0].toLowerCase() === username.toLowerCase());
+            if (userRow) role = userRow[2];
+            // If not found, try admins sheet
+            if (!role) {
+              const adminsRes = await gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: CONFIG.ADMINS_SHEET_ID,
+                range: CONFIG.ADMINS_RANGE,
+              });
+              const admins = adminsRes.result.values || [];
+              const adminRow = admins.find(row => row[1] && row[1].toLowerCase() === username.toLowerCase());
+              if (adminRow) role = adminRow[3];
+            }
+          } catch (e) {
+            console.error('Error fetching user role after login:', e);
+          }
+          currentUserRole = (role || '').toLowerCase();
+          updateNavVisibility(currentUserRole, true);
+          showApp();
+        } else {
+          errorBox.textContent = 'Invalid username or password.';
+          updateNavVisibility(null, false);
         }
-      } catch (e) {
-        console.error('Error fetching user role after login:', e);
+      } catch (err) {
+        console.error("[app.js] Login error:", err);
+        errorBox.textContent = 'Login error: ' + (err.result?.error?.message || err.message || JSON.stringify(err));
+        await showAlert('Login failed: ' + (err.result?.error?.message || err.message || "An unknown error occurred."));
+        updateNavVisibility(null, false);
       }
-      currentUserRole = (role || '').toLowerCase();
-      updateNavVisibility(currentUserRole, true);
-      showApp();
-    } else {
-      errorBox.textContent = 'Invalid username or password.';
-      updateNavVisibility(null, false);
-    }
-  } catch (err) {
-    console.error("[app.js] Login error:", err);
-    errorBox.textContent = 'Login error: ' + (err.result?.error?.message || err.message || JSON.stringify(err));
-    await showAlert('Login failed: ' + (err.result?.error?.message || err.message || "An unknown error occurred."));
-    updateNavVisibility(null, false);
+    };
   }
 };
 
