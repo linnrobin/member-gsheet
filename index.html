@@ -17,10 +17,20 @@
     </div>
     <ul class="nav flex-column mb-auto">
       <li class="nav-item"><a href="#" class="nav-link" id="nav-dashboard">Dashboard</a></li>
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-users">Users</a></li>
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-admins">Admins</a></li>
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-roles">User Levels</a></li>
-      <li class="nav-item"><a href="#" class="nav-link" id="nav-admin-roles">Admin Role Permission</a></li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle" id="nav-users-dropdown" data-bs-toggle="dropdown" role="button" aria-expanded="false">Users</a>
+        <ul class="dropdown-menu" aria-labelledby="nav-users-dropdown">
+          <li><a class="dropdown-item" href="#users" id="nav-users">User List</a></li>
+          <li><a class="dropdown-item" href="#roles" id="nav-roles">User Level</a></li>
+        </ul>
+      </li>
+      <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle" id="nav-admins-dropdown" data-bs-toggle="dropdown" role="button" aria-expanded="false">Admins</a>
+        <ul class="dropdown-menu" aria-labelledby="nav-admins-dropdown">
+          <li><a class="dropdown-item" href="#admins" id="nav-admins">Admin List</a></li>
+          <li><a class="dropdown-item" href="#rbac" id="nav-admin-roles">Admin Role</a></li>
+        </ul>
+      </li>
       <li class="nav-item"><a href="#" class="nav-link" id="nav-activity-log">Activity Log</a></li>
       <li class="nav-item"><a href="#" class="nav-link" id="nav-settings">Settings</a></li>
     </ul>

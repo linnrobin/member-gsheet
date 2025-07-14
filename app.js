@@ -431,13 +431,33 @@ function setupNavigation() {
   const navMap = {
     'nav-dashboard': 'dashboard',
     'nav-users': 'users',
-    'nav-admins': 'admins',
     'nav-roles': 'roles',
+    'nav-admins': 'admins',
     'nav-admin-roles': 'rbac',
     'nav-activity-log': 'activity',
     'nav-settings': 'settings',
   };
-  Object.keys(navMap).forEach(id => {
+  // Main nav links
+  ['nav-dashboard', 'nav-activity-log', 'nav-settings'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.onclick = (e) => {
+        e.preventDefault();
+        window.location.hash = navMap[id];
+      };
+    }
+  });
+  // Dropdown nav links
+  ['nav-users', 'nav-roles'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.onclick = (e) => {
+        e.preventDefault();
+        window.location.hash = navMap[id];
+      };
+    }
+  });
+  ['nav-admins', 'nav-admin-roles'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.onclick = (e) => {
