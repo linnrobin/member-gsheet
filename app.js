@@ -268,6 +268,7 @@ function renderPage(page) {
       showApp();
       break;
     case 'admins':
+      setActiveNav('nav-admins');
       renderAdminsPage();
       break;
     case 'roles':
@@ -617,17 +618,27 @@ if (sideUserForm) {
 }
 
 function populateForm(row, index) {
-  document.getElementById('user-index').value = index;
-  document.getElementById('user-username').value = row[0] || '';
-  document.getElementById('user-password').value = row[1] || '';
-  document.getElementById('user-role').value = row[2] || '';
+  const userIndex = document.getElementById('user-index');
+  const userUsername = document.getElementById('user-username');
+  const userPassword = document.getElementById('user-password');
+  const userRole = document.getElementById('user-role');
+  
+  if (userIndex) userIndex.value = index;
+  if (userUsername) userUsername.value = row[0] || '';
+  if (userPassword) userPassword.value = row[1] || '';
+  if (userRole) userRole.value = row[2] || '';
 }
 
 function clearForm() {
-  document.getElementById('user-index').value = '';
-  document.getElementById('user-username').value = '';
-  document.getElementById('user-password').value = '';
-  document.getElementById('user-role').value = '';
+  const userIndex = document.getElementById('user-index');
+  const userUsername = document.getElementById('user-username');
+  const userPassword = document.getElementById('user-password');
+  const userRole = document.getElementById('user-role');
+  
+  if (userIndex) userIndex.value = '';
+  if (userUsername) userUsername.value = '';
+  if (userPassword) userPassword.value = '';
+  if (userRole) userRole.value = '';
 }
 
 

@@ -6,7 +6,6 @@ export function renderAdminsPage() {
   const main = document.getElementById('main-content');
   if (!main) return;
   main.innerHTML = `<h2 class="h4 mb-3">Admins</h2><div id="admin-table-container"></div>`;
-  setActiveNav('nav-admins');
   showAdmins();
 }
 
