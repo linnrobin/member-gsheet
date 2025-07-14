@@ -336,7 +336,7 @@ async function deleteAdmin(idx) {
       renderActivityLogPage();
       break;
     case 'settings':
-      main.innerHTML = `<h2 class="h4 mb-3">Settings</h2><div class="card p-4"><form id="change-password-form"><div class="mb-3"><label for="current-password" class="form-label">Current Password</label><input type="password" id="current-password" class="form-control" required></div><div class="mb-3"><label for="new-password" class="form-label">New Password</label><input type="password" id="new-password" class="form-control" required></div><button type="submit" class="btn btn-primary">Change Password</button><div id="settings-form-error" class="text-danger mt-2"></div></form></div>`;
+      main.innerHTML = `<h2 class="h4 mb-3">Settings</h2><div class="card p-4"><form id="change-password-form"><div class="mb-3"><label for="current-password" class="form-label">Current Password</label><input type="password" id="current-password" class="form-control" required></div><div class="mb-3"><label for="new-password" class="form-label">New Password</label><input type="password" id="new-password" class="form-control" required></div><button type="submit" class="btn btn-primary"><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-key' viewBox='0 0 16 16'><path d='M3 8a5 5 0 1 1 9.584 2.166l2.122 2.122a1 1 0 0 1-1.415 1.415l-.707-.707-.707.707a1 1 0 0 1-1.415-1.415l.707-.707-.707-.707A5 5 0 0 1 3 8zm5-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'/></svg> <span class="visually-hidden">Change Password</span></button><div id="settings-form-error" class="text-danger mt-2"></div></form></div>`;
       setActiveNav('nav-settings');
       renderSettingsPage();
       break;
@@ -568,10 +568,12 @@ async function showApp(page = 1, pageSize = 10) {
       }
       // Actions
       const actions = document.createElement('td');
-      // Change Password button
+      // Change Password button (key icon, accessible label)
       const changePwdBtn = document.createElement('button');
       changePwdBtn.className = 'btn btn-sm btn-warning me-2';
-      changePwdBtn.textContent = 'Change Password';
+      changePwdBtn.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-key' viewBox='0 0 16 16'><path d='M3 8a5 5 0 1 1 9.584 2.166l2.122 2.122a1 1 0 0 1-1.415 1.415l-.707-.707-.707.707a1 1 0 0 1-1.415-1.415l.707-.707-.707-.707A5 5 0 0 1 3 8zm5-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'/></svg> <span class='visually-hidden'>Change Password</span>`;
+      changePwdBtn.title = 'Change Password';
+      changePwdBtn.setAttribute('aria-label', 'Change Password');
       changePwdBtn.onclick = () => openChangePasswordModal(startIdx + idx, row);
       // Edit button
       const editBtn = document.createElement('button');
