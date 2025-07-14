@@ -49,8 +49,13 @@ export function setUserHelpers({ showToast: st, showAlert: sa }) {
 
 // --- User Table Rendering & UI Logic ---
 export async function showApp(page = 1, pageSize = 10) {
+
   // Prevent rendering if not authorized or not logged in
   if (!window.isAuthorized || !sessionStorage.getItem('username')) {
+    console.log('[showApp] Not authorized or not logged in:', {
+      isAuthorized: window.isAuthorized,
+      sessionUser: sessionStorage.getItem('username')
+    });
     const appDiv = document.getElementById('app');
     if (appDiv) appDiv.style.display = 'none';
     const loginBox = document.getElementById('login-box');
@@ -72,14 +77,20 @@ export async function showApp(page = 1, pageSize = 10) {
   if (authBtn) authBtn.style.display = 'none';
 
   try {
+    console.log('[showApp] Fetching users...');
     const users = await fetchUsers();
+    console.log('[showApp] Users fetched:', users);
     const userBody = document.querySelector('#user-body');
     const thead = userBody && userBody.parentElement ? userBody.parentElement.querySelector('thead') : null;
     const tbody = userBody;
-    if (!tbody) return; // Defensive: don't proceed if tbody is missing
+    if (!tbody) {
+      console.warn('[showApp] tbody (#user-body) not found in DOM.');
+      return; // Defensive: don't proceed if tbody is missing
+    }
     tbody.replaceChildren();
 
     if (!users || users.length === 0) {
+      console.log('[showApp] No users found.');
       const tr = document.createElement('tr');
       const td = document.createElement('td');
       td.setAttribute('colspan', '100');
@@ -346,10 +357,14 @@ export function populateForm(row, index) {
 }
 
 export function clearForm() {
-  document.getElementById('user-index').value = '';
-  document.getElementById('user-username').value = '';
-  document.getElementById('user-password').value = '';
-  document.getElementById('user-role').value = '';
+  const idx = document.getElementById('user-index');
+  if (idx) idx.value = '';
+  const uname = document.getElementById('user-username');
+  if (uname) uname.value = '';
+  const pwd = document.getElementById('user-password');
+  if (pwd) pwd.value = '';
+  const role = document.getElementById('user-role');
+  if (role) role.value = '';
 }
 
 function showConfirm(message) {
