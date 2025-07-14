@@ -1,6 +1,36 @@
 import { validateUser } from './validation.js';
+import { appendAdminActivityLog, appendUserActivityLog } from './api/activityLogApi.js';
 // Toast and alert helpers will be imported from app.js for now
 let showToast, showAlert;
+
+// Helper to get current user (assumes global currentUser or similar)
+function getCurrentUser() {
+  return window.currentUser?.username || 'unknown';
+}
+
+// Helper to get current time in readable format
+function getLogTime() {
+  const now = new Date();
+  return now.toISOString().replace('T', ' ').substring(0, 19);
+}
+
+// Helper to log admin activity
+function logAdminAction(action, details = '') {
+  appendAdminActivityLog({
+    user: getCurrentUser(),
+    action,
+    details,
+  });
+}
+
+// Helper to log user activity
+function logUserAction(action, details = '') {
+  appendUserActivityLog({
+    user: getCurrentUser(),
+    action,
+    details,
+  });
+}
 
 // Allow app.js to inject helpers (to avoid circular imports)
 export function setUserHelpers({ showToast: st, showAlert: sa }) {
@@ -86,8 +116,21 @@ export async function showApp(page = 1, pageSize = 10) {
         const confirmed = await showConfirm('Delete user?');
         if (confirmed) {
           try {
+            const username = row[0] || '';
+            const role = row[2] || '';
             await deleteUserAt(startIdx + idx);
             showToast('User deleted successfully!', 'success');
+            if (role === 'admin') {
+              logAdminAction(
+                `deleted admin`,
+                `deleted admin '${username}' in user list at ${getLogTime()}`
+              );
+            } else {
+              logUserAction(
+                `deleted user`,
+                `deleted user '${username}' in user list at ${getLogTime()}`
+              );
+            }
             showApp(page, pageSize);
           } catch (err) {
             showToast('Error deleting user.', 'danger');
@@ -220,11 +263,33 @@ if (sideUserForm) {
       if (index === '') {
         await appendUser({ username, password: hashedPassword, role });
         showToast('User added successfully!', 'success');
+        if (role === 'admin') {
+          logAdminAction(
+            `created admin`,
+            `created admin '${username}' in user list at ${getLogTime()}`
+          );
+        } else {
+          logUserAction(
+            `created user`,
+            `created user '${username}' in user list at ${getLogTime()}`
+          );
+        }
       } else {
         const users = await fetchUsers();
         const created_at = users[parseInt(index, 10)]?.[3] || new Date().toISOString();
         await updateUser(index, { username, password: hashedPassword, role, created_at });
         showToast('User updated successfully!', 'success');
+        if (role === 'admin') {
+          logAdminAction(
+            `updated admin`,
+            `updated admin '${username}' in user list at ${getLogTime()}`
+          );
+        } else {
+          logUserAction(
+            `updated user`,
+            `updated user '${username}' in user list at ${getLogTime()}`
+          );
+        }
       }
       closeSidePanel();
       showApp();
@@ -270,6 +335,17 @@ function openChangePasswordModal(index, row) {
       };
       updateUser(index, updated).then(() => {
         showToast('Password changed!', 'success');
+        if ((user[2] || '') === 'admin') {
+          logAdminAction(
+            `changed password`,
+            `changed password for admin '${user[0]}' in user list at ${getLogTime()}`
+          );
+        } else {
+          logUserAction(
+            `changed password`,
+            `changed password for user '${user[0]}' in user list at ${getLogTime()}`
+          );
+        }
         showApp();
       }).catch(() => showToast('Error changing password.', 'danger'));
     });

@@ -187,6 +187,26 @@ function renderPage(page) {
       setActiveNav('nav-roles');
       renderRolesPage();
       break;
+    case 'rbac':
+      main.innerHTML = `<h2 class="h4 mb-3">Admin Role Permission</h2><div class="card p-4"><div id="rbac-content">(Coming soon) Configure role-based access control.</div></div>`;
+      setActiveNav('nav-admin-roles');
+      renderRBACPage();
+      break;
+    case 'activity-admin':
+      main.innerHTML = `<h2 class="h4 mb-3">Admin Activity Log</h2><div class="card p-4"><ul id="activity-log-list-admin" class="list-group"></ul></div>`;
+      setActiveNav('nav-activity-admin-log');
+      renderActivityLogPage('admin');
+      break;
+    case 'activity-user':
+      main.innerHTML = `<h2 class="h4 mb-3">User Activity Log</h2><div class="card p-4"><ul id="activity-log-list-user" class="list-group"></ul></div>`;
+      setActiveNav('nav-activity-user-log');
+      renderActivityLogPage('user');
+      break;
+    case 'settings':
+      main.innerHTML = `<h2 class="h4 mb-3">Settings</h2><div class="card p-4"><form id="change-password-form"><div class="mb-3"><label for="current-password" class="form-label">Current Password</label><input type="password" id="current-password" class="form-control" required></div><div class="mb-3"><label for="new-password" class="form-label">New Password</label><input type="password" id="new-password" class="form-control" required></div><button type="submit" class="btn btn-primary"><svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-key' viewBox='0 0 16 16'><path d='M3 8a5 5 0 1 1 9.584 2.166l2.122 2.122a1 1 0 0 1-1.415 1.415l-.707-.707-.707.707a1 1 0 0 1-1.415-1.415l.707-.707-.707-.707A5 5 0 0 1 3 8zm5-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'/></svg> <span class="visually-hidden">Change Password</span></button><div id="settings-form-error" class="text-danger mt-2"></div></form></div>`;
+      setActiveNav('nav-settings');
+      renderSettingsPage();
+      break;
 // --- Admins Page Logic ---
 import { renderAdminsPage, showAdmins } from './admin.js';
 
@@ -320,16 +340,41 @@ let activityLog = [
   { action: 'User login', date: new Date().toLocaleString() },
   { action: 'User added', date: new Date().toLocaleString() },
 ];
-function renderActivityLogPage() {
-  const list = document.getElementById('activity-log-list');
-  if (!list) return;
-  list.innerHTML = '';
-  activityLog.forEach(item => {
-    const li = document.createElement('li');
-    li.className = 'list-group-item';
-    li.textContent = `${item.date}: ${item.action}`;
-    list.appendChild(li);
-  });
+function renderActivityLogPage(type = 'user') {
+  // Fetch and render the correct log type
+  if (type === 'admin') {
+    // Fetch admin activity logs
+    import('./api/activityLogApi.js').then(({ fetchAdminActivityLogs }) => {
+      fetchAdminActivityLogs().then(logs => {
+        const list = document.getElementById('activity-log-list-admin');
+        if (!list) return;
+        list.innerHTML = '';
+        (logs || []).forEach(row => {
+          const [user, action, details, date] = row;
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = `${date || ''}: ${user || ''} - ${action || ''} - ${details || ''}`;
+          list.appendChild(li);
+        });
+      });
+    });
+  } else {
+    // Fetch user activity logs
+    import('./api/activityLogApi.js').then(({ fetchUserActivityLogs }) => {
+      fetchUserActivityLogs().then(logs => {
+        const list = document.getElementById('activity-log-list-user');
+        if (!list) return;
+        list.innerHTML = '';
+        (logs || []).forEach(row => {
+          const [user, action, details, date] = row;
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = `${date || ''}: ${user || ''} - ${action || ''} - ${details || ''}`;
+          list.appendChild(li);
+        });
+      });
+    });
+  }
 }
 
 // --- Settings Page Logic (Change Password) ---
@@ -369,11 +414,21 @@ function setupNavigation() {
     'nav-roles': 'roles',
     'nav-admins': 'admins',
     'nav-admin-roles': 'rbac',
-    'nav-activity-log': 'activity',
+    'nav-activity-admin-log': 'activity-admin',
+    'nav-activity-user-log': 'activity-user',
     'nav-settings': 'settings',
   };
   // All nav links (accordion or not)
-  ['nav-dashboard', 'nav-users', 'nav-roles', 'nav-admins', 'nav-admin-roles', 'nav-activity-log', 'nav-settings'].forEach(id => {
+  [
+    'nav-dashboard',
+    'nav-users',
+    'nav-roles',
+    'nav-admins',
+    'nav-admin-roles',
+    'nav-activity-admin-log',
+    'nav-activity-user-log',
+    'nav-settings',
+  ].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.onclick = (e) => {
@@ -564,7 +619,7 @@ function formatDate(isoString) {
   const d = new Date(isoString);
   if (isNaN(d.getTime())) return '';
   const pad = n => n.toString().padStart(2, '0');
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${pad(d.getFullYear())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function renderPagination(current, total, pageSize) {
