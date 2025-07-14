@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.28';
+export const APP_VERSION = '1.0.29';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -598,61 +598,46 @@ function openSidePanel(mode, row = [], index = '') {
     return;
   }
   
-  // Wait for elements to be available (retry mechanism)
-  const maxRetries = 10;
-  let retryCount = 0;
-  
-  const tryOpen = () => {
-    const sidePanel = document.getElementById('side-panel');
-    const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
-    const sidePanelTitle = document.getElementById('side-panel-title');
-    const sideUserIndex = document.getElementById('side-user-index');
-    const sideUserUsername = document.getElementById('side-user-username');
-    const sideUserPassword = document.getElementById('side-user-password');
-    const sideUserRole = document.getElementById('side-user-role');
-    const sideFormError = document.getElementById('side-form-error');
+  // Get all required elements
+  const sidePanel = document.getElementById('side-panel');
+  const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
+  const sidePanelTitle = document.getElementById('side-panel-title');
+  const sideUserIndex = document.getElementById('side-user-index');
+  const sideUserUsername = document.getElementById('side-user-username');
+  const sideUserPassword = document.getElementById('side-user-password');
+  const sideUserRole = document.getElementById('side-user-role');
+  const sideFormError = document.getElementById('side-form-error');
 
-    if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
-        !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
-      
-      retryCount++;
-      if (retryCount < maxRetries) {
-        console.log(`[openSidePanel] Retry ${retryCount}/${maxRetries} - waiting for elements...`);
-        setTimeout(tryOpen, 100); // Wait 100ms and try again
-        return;
-      }
-      
-      console.error('[openSidePanel] Required side panel elements not found after retries');
-      debugSidePanelElements(); // Debug what's missing
-      showToast('Error opening user form. Please refresh the page.', 'danger');
-      return;
-    }
+  if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
+      !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
+    console.error('[openSidePanel] Required side panel elements not found');
+    debugSidePanelElements(); // Debug what's missing
+    showToast('Error opening user form. Please refresh the page.', 'danger');
+    return;
+  }
 
-    // All elements found, proceed with opening
-    sidePanel.classList.add('open');
-    sidePanelBackdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    
-    if (mode === 'edit') {
-      sidePanelTitle.textContent = 'Edit User';
-      sideUserIndex.value = index;
-      sideUserUsername.value = row[0] || '';
-      sideUserPassword.value = row[1] || '';
-      sideUserRole.value = row[2] || '';
-    } else {
-      sidePanelTitle.textContent = 'Add User';
-      sideUserIndex.value = '';
-      sideUserUsername.value = '';
-      sideUserPassword.value = '';
-      sideUserRole.value = '';
-    }
-    sideFormError.textContent = '';
-    setTimeout(() => {
-      if (sideUserUsername) sideUserUsername.focus();
-    }, 100);
-  };
+  // All elements found, proceed with opening
+  sidePanel.classList.add('open');
+  sidePanelBackdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
   
-  tryOpen();
+  if (mode === 'edit') {
+    sidePanelTitle.textContent = 'Edit User';
+    sideUserIndex.value = index;
+    sideUserUsername.value = row[0] || '';
+    sideUserPassword.value = row[1] || '';
+    sideUserRole.value = row[2] || '';
+  } else {
+    sidePanelTitle.textContent = 'Add User';
+    sideUserIndex.value = '';
+    sideUserUsername.value = '';
+    sideUserPassword.value = '';
+    sideUserRole.value = '';
+  }
+  sideFormError.textContent = '';
+  setTimeout(() => {
+    if (sideUserUsername) sideUserUsername.focus();
+  }, 100);
 }
 
 function closeSidePanel() {

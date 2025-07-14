@@ -135,41 +135,44 @@
         </table>
       </div>
     </div>
-        <button class="side-panel-close" id="side-panel-close" aria-label="Close">&times;</button>
-        <h2 id="side-panel-title" class="h4 mb-3">User Form</h2>
-        <form id="side-user-form">
-          <input id="side-user-index" type="hidden" />
-          <div class="mb-3">
-            <label for="side-user-username" class="form-label">Username</label>
-            <input id="side-user-username" class="form-control" placeholder="Username" required />
-          </div>
-          <div class="mb-3">
-            <label for="side-user-password" class="form-label">Password</label>
-            <input id="side-user-password" class="form-control" placeholder="Password" type="password" required />
-          </div>
-          <div class="mb-3">
-            <label for="side-user-role" class="form-label">Role</label>
-            <input id="side-user-role" class="form-control" placeholder="Role" required />
-          </div>
-          <div class="d-flex justify-content-between">
-            <button type="submit" class="btn btn-primary" id="side-save-user-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
-                <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
-              </svg>
-              Save
-            </button>
-            <button type="button" class="btn btn-secondary" id="side-cancel-user-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
-                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-              </svg>
-              Cancel
-            </button>
-          </div>
-          <div id="side-form-error" class="text-danger mt-2"></div>
-        </form>
-      </aside>
-    </div>
-  </div>
+
+    <!-- Side Panel for Add/Edit User (moved outside app div) -->
+    <div id="side-panel-backdrop" class="side-panel-backdrop"></div>
+    <aside id="side-panel" class="side-panel" aria-modal="true" aria-labelledby="side-panel-title" tabindex="-1">
+      <button class="side-panel-close" id="side-panel-close" aria-label="Close">&times;</button>
+      <h2 id="side-panel-title" class="h4 mb-3">User Form</h2>
+      <form id="side-user-form">
+        <input id="side-user-index" type="hidden" />
+        <div class="mb-3">
+          <label for="side-user-username" class="form-label">Username</label>
+          <input id="side-user-username" class="form-control" placeholder="Username" required />
+        </div>
+        <div class="mb-3">
+          <label for="side-user-password" class="form-label">Password</label>
+          <input id="side-user-password" class="form-control" placeholder="Password" type="password" required />
+        </div>
+        <div class="mb-3">
+          <label for="side-user-role" class="form-label">Role</label>
+          <input id="side-user-role" class="form-control" placeholder="Role" required />
+        </div>
+        <div class="d-flex justify-content-between">
+          <button type="submit" class="btn btn-primary" id="side-save-user-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+              <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+            </svg>
+            Save
+          </button>
+          <button type="button" class="btn btn-secondary" id="side-cancel-user-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+            Cancel
+          </button>
+        </div>
+        <div id="side-form-error" class="text-danger mt-2"></div>
+      </form>
+    </aside>
+  </main>
 
 
   <!-- Toast Notification Container -->
