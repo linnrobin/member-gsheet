@@ -1,6 +1,6 @@
-//app.js
+cd \"$(dirname \"$0\")/..\"//app.js
 // Versioning
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.2';
 
 // Ensure all DOM event assignments happen after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -141,18 +141,26 @@ function renderPage(page) {
   // Guard: Only allow access if authorized and logged in
   const username = sessionStorage.getItem('username');
   if (!isAuthorized || !username) {
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('main-nav').style.display = 'none';
-    document.getElementById('login-box').style.display = 'block';
-    document.getElementById('authorize-btn').style.display = 'inline-block';
+    const appEl = document.getElementById('app');
+    if (appEl) appEl.style.display = 'none';
+    const navEl = document.getElementById('main-nav');
+    if (navEl) navEl.style.display = 'none';
+    const loginBox = document.getElementById('login-box');
+    if (loginBox) loginBox.style.display = 'block';
+    const authBtn = document.getElementById('authorize-btn');
+    if (authBtn) authBtn.style.display = 'inline-block';
     main.innerHTML = '';
     window.location.hash = '';
     return;
   } else {
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('main-nav').style.display = '';
-    document.getElementById('login-box').style.display = 'none';
-    document.getElementById('authorize-btn').style.display = 'none';
+    const appEl = document.getElementById('app');
+    if (appEl) appEl.style.display = 'block';
+    const navEl = document.getElementById('main-nav');
+    if (navEl) navEl.style.display = '';
+    const loginBox = document.getElementById('login-box');
+    if (loginBox) loginBox.style.display = 'none';
+    const authBtn = document.getElementById('authorize-btn');
+    if (authBtn) authBtn.style.display = 'none';
   }
 
   // RBAC: Only allow admins to access Admins section
