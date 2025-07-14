@@ -345,7 +345,6 @@ function setupNavigation() {
     renderPage(page);
   });
 }
-}
 
 
 // --- Bootstrap Toast Notification Integration ---
