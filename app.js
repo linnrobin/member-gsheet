@@ -659,3 +659,57 @@ document.getElementById('deauthorize-btn').onclick = async () => {
     clearForm();
   }
 };
+
+// --- Roles Page Logic (in-memory for demo) ---
+function renderRolesPage() {
+  // Placeholder: You can implement your roles UI logic here
+  // For now, just show a message
+  const roleList = document.getElementById('role-list');
+  if (roleList) {
+    roleList.innerHTML = '<li class="list-group-item">admin</li><li class="list-group-item">user</li>';
+  }
+}
+
+function renderRBACPage() {
+  // Placeholder: You can implement your RBAC UI logic here
+  // For now, just show a message
+  const rbacContent = document.getElementById('rbac-content');
+  if (rbacContent) {
+    rbacContent.textContent = '(Coming soon) Configure role-based access control.';
+  }
+}
+
+function renderActivityLogPage(type = 'user') {
+  // Fetch and render the correct log type
+  if (type === 'admin') {
+    import('./api/activityLogApi.js').then(({ fetchAdminActivityLogs }) => {
+      fetchAdminActivityLogs().then(logs => {
+        const list = document.getElementById('activity-log-list-admin');
+        if (!list) return;
+        list.innerHTML = '';
+        (logs || []).forEach(row => {
+          const [user, action, details, date] = row;
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = `${date || ''}: ${user || ''} - ${action || ''} - ${details || ''}`;
+          list.appendChild(li);
+        });
+      });
+    });
+  } else {
+    import('./api/activityLogApi.js').then(({ fetchUserActivityLogs }) => {
+      fetchUserActivityLogs().then(logs => {
+        const list = document.getElementById('activity-log-list-user');
+        if (!list) return;
+        list.innerHTML = '';
+        (logs || []).forEach(row => {
+          const [user, action, details, date] = row;
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = `${date || ''}: ${user || ''} - ${action || ''} - ${details || ''}`;
+          list.appendChild(li);
+        });
+      });
+    });
+  }
+}
