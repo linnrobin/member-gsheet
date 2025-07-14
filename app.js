@@ -646,6 +646,7 @@ function openChangePasswordModal(index, row) {
 function formatDate(isoString) {
   if (!isoString) return '';
   const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
   const pad = n => n.toString().padStart(2, '0');
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
