@@ -36,9 +36,9 @@ userForm.onsubmit = async (e) => {
   e.preventDefault();
   errorBox.textContent = '';
   const index = document.getElementById('user-index').value;
-  const username = document.getElementById('user-username').value.trim();
-  const password = document.getElementById('user-password').value.trim();
-  const role = document.getElementById('user-role').value.trim();
+  let username = document.getElementById('user-username').value.trim().toLowerCase();
+  let password = document.getElementById('user-password').value.trim();
+  let role = document.getElementById('user-role').value.trim().toLowerCase();
 
   const errors = validateUser({ username, password, role });
   if (Object.keys(errors).length > 0) {
