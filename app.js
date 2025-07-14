@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.30';
+export const APP_VERSION = '1.0.31';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -273,7 +273,7 @@ function renderPage(page) {
         </div>
       `;
       setActiveNav('nav-users');
-      showApp();
+      renderUsersTable();
       break;
     case 'admins':
       setActiveNav('nav-admins');
@@ -392,7 +392,19 @@ function showConfirm(message) {
 }
 // --- End Bootstrap Toast Notification Integration ---
 
-async function showApp(page = 1, pageSize = 10) {
+async function showApp() {
+  // Ensure we have a valid token before proceeding
+  const token = gapi.client.getToken()?.access_token;
+  if (!token) {
+    console.error('[showApp] No valid access token available');
+    showToast('Authentication required. Please authorize first.', 'danger');
+    isAuthorized = false;
+    document.getElementById('login-box').style.display = 'block';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('authorize-btn').style.display = 'inline-block';
+    return;
+  }
+
   const loginBox = document.getElementById('login-box');
   if (loginBox) loginBox.style.display = 'none';
   const appDiv = document.getElementById('app');
@@ -404,110 +416,8 @@ async function showApp(page = 1, pageSize = 10) {
   const authBtn = document.getElementById('authorize-btn');
   if (authBtn) authBtn.style.display = 'none';
 
-  try {
-    const users = await fetchUsers();
-    const userBody = document.querySelector('#user-body');
-    const thead = userBody && userBody.parentElement ? userBody.parentElement.querySelector('thead') : null;
-    const tbody = userBody;
-    if (!tbody) return; // Defensive: don't proceed if tbody is missing
-    tbody.replaceChildren();
-
-    if (!users || users.length === 0) {
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.setAttribute('colspan', '100');
-      td.className = 'text-center text-muted';
-      td.textContent = 'No users found.';
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
-    }
-
-    // Fetch headers from Google Sheet (first row)
-    const headers = ["No."].concat(["Username", "Password", "Role", "Created At", "Updated At"]);
-    // Render table header dynamically
-    if (thead) {
-      thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '<th>Actions</th></tr>';
-    }
-
-    // Pagination logic
-    const totalEntries = users.length;
-    const totalPages = Math.ceil(totalEntries / pageSize);
-    const startIdx = (page - 1) * pageSize;
-    const endIdx = Math.min(startIdx + pageSize, totalEntries);
-
-    // Render paginated rows
-    users.slice(startIdx, endIdx).forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      // Row number
-      const tdNum = document.createElement('td');
-      tdNum.textContent = startIdx + idx + 1;
-      tr.appendChild(tdNum);
-      // User columns
-      for (let i = 0; i < headers.length - 1; i++) {
-        const td = document.createElement('td');
-        // Format created_at and updated_at
-        if ((headers[i + 1] === 'Created At' || headers[i + 1] === 'Updated At') && row[i]) {
-          td.textContent = formatDate(row[i]);
-        } else {
-          td.textContent = row[i] || '';
-        }
-        tr.appendChild(td);
-      }
-      // Actions
-      const actions = document.createElement('td');
-      // Change Password button (key icon, accessible label)
-      const changePwdBtn = document.createElement('button');
-      changePwdBtn.className = 'btn btn-sm btn-warning me-2';
-      changePwdBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg> <span class='visually-hidden'>Change Password</span>`;
-      changePwdBtn.title = 'Change Password';
-      changePwdBtn.setAttribute('aria-label', 'Change Password');
-      changePwdBtn.onclick = () => openChangePasswordModal(startIdx + idx, row);
-      // Edit button
-      const editBtn = document.createElement('button');
-      editBtn.className = 'btn btn-sm btn-info me-2';
-      editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706l-1 1a.5.5 0 0 1-.708 0l-1-1a.5.5 0 0 1 0-.707l1-1a.5.5 0 0 1 .708 0l1 1zm-1.75 2.456-1-1L4 11.146V12h.854l8.898-8.898z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>';
-      editBtn.onclick = () => openSidePanel('edit', row, startIdx + idx);
-      // Delete button
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-sm btn-danger';
-      delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16"><path d="M6.5 1.5v-1h3v1H14a.5.5 0 0 1 0 1h-1v11A2.5 2.5 0 0 1 10.5 16h-5A2.5 2.5 0 0 1 3 13.5v-11H2a.5.5 0 0 1 0-1h3.5zm-3 2v10A1.5 1.5 0 0 0 5.5 15h5A1.5 1.5 0 0 0 12 13.5v-10h-8z"/><path d="M8 5.5a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5zm-2 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0v-6a.5.5 0 0 1 .5-.5z"/></svg>';
-      delBtn.onclick = async () => {
-        const confirmed = await showConfirm('Delete user?');
-        if (confirmed) {
-          try {
-            await deleteUserAt(startIdx + idx);
-            showToast('User deleted successfully!', 'success');
-            showApp(page, pageSize);
-          } catch (err) {
-            showToast('Error deleting user.', 'danger');
-            console.error(err);
-          }
-        }
-      };
-      actions.append(changePwdBtn, editBtn, delBtn);
-      tr.appendChild(actions);
-      tbody.appendChild(tr);
-    });
-    // Pagination controls
-    renderPagination(page, totalPages, pageSize);
-
-    // (Add User button is now above the table in index.html)
-  } catch (error) {
-    console.error("[app.js] Error fetching users:", error);
-    showAlert("Error loading users: " + (error.message || JSON.stringify(error)));
-    const loginBox = document.getElementById('login-box');
-    const appDiv = document.getElementById('app');
-    const authBtn = document.getElementById('authorize-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const deauthBtn = document.getElementById('deauthorize-btn');
-    
-    if (loginBox) loginBox.style.display = 'block';
-    if (appDiv) appDiv.style.display = 'none';
-    if (authBtn) authBtn.style.display = 'inline-block';
-    if (logoutBtn) logoutBtn.style.display = 'none';
-    if (deauthBtn) deauthBtn.style.display = 'none';
-  }
+  // Navigate to the dashboard instead of directly trying to fetch users
+  renderPage('dashboard');
 }
 
 function formatDate(isoString) {
@@ -1377,3 +1287,64 @@ function debugSidePanelElements() {
 
 // Make debug function available globally for testing
 window.debugSidePanelElements = debugSidePanelElements;
+
+async function renderUsersTable() {
+  // Ensure we have a valid token before making API calls
+  const token = gapi.client.getToken()?.access_token;
+  if (!token) {
+    console.error('[renderUsersTable] No valid access token available');
+    const tbody = document.getElementById('user-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Authentication required. Please re-authorize.</td></tr>';
+    }
+    return;
+  }
+
+  try {
+    const users = await fetchUsers();
+    const tbody = document.getElementById('user-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+
+    if (!users || users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No users found.</td></tr>';
+      return;
+    }
+
+    users.forEach((row, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row[0] || ''}</td>
+        <td>${'*'.repeat((row[1] || '').length)}</td>
+        <td><span class="badge bg-secondary">${row[2] || ''}</span></td>
+        <td>${formatDate(row[3] || '')}</td>
+        <td>${formatDate(row[4] || '')}</td>
+        <td class="table-actions">
+          <button class="btn btn-warning btn-sm me-1" onclick="showChangePasswordModal('${row[0]}')">Change Password</button>
+          <button class="btn btn-primary btn-sm me-1" onclick="openSidePanel('edit', ${JSON.stringify(row).replace(/"/g, '&quot;')})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser('${row[0]}')">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error('[renderUsersTable] Error fetching users:', error);
+    const tbody = document.getElementById('user-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading users. Please try again.</td></tr>';
+    }
+    
+    // If it's an auth error, show appropriate message
+    if (error.status === 401) {
+      showToast('Authentication expired. Please re-authorize.', 'danger');
+      // Clear invalid token and show auth button
+      sessionStorage.removeItem('access_token');
+      gapi.client.setToken(null);
+      isAuthorized = false;
+      document.getElementById('authorize-btn').style.display = 'inline-block';
+    } else {
+      showToast('Error loading users: ' + (error.message || 'Unknown error'), 'danger');
+    }
+  }
+}
