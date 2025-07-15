@@ -291,17 +291,29 @@ const sideUserRole = document.getElementById('side-user-role');
 const sideFormError = document.getElementById('side-form-error');
 
 export function openSidePanel(mode, row = [], index = '') {
+  // Check if required elements exist
+  const sidePanelTitle = document.getElementById('side-panel-title');
+  if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
+      !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
+    console.error('Required side panel elements not found');
+    if (helpers.showToast) {
+      helpers.showToast('Error opening user form. Please refresh the page.', 'danger');
+    }
+    return;
+  }
+
   sidePanel.classList.add('open');
   sidePanelBackdrop.classList.add('open');
   document.body.style.overflow = 'hidden';
+  
   if (mode === 'edit') {
-    document.getElementById('side-panel-title').textContent = 'Edit User';
+    sidePanelTitle.textContent = 'Edit User';
     sideUserIndex.value = index;
     sideUserUsername.value = row[0] || '';
     sideUserPassword.value = row[1] || '';
     sideUserRole.value = row[2] || '';
   } else {
-    document.getElementById('side-panel-title').textContent = 'Add User';
+    sidePanelTitle.textContent = 'Add User';
     sideUserIndex.value = '';
     sideUserUsername.value = '';
     sideUserPassword.value = '';
@@ -402,6 +414,15 @@ function showConfirm(message) {
 }
 
 export function openChangePasswordModal(index, row) {
+  // Check if bcrypt is available
+  if (!window.bcrypt) {
+    console.error('bcrypt library not loaded');
+    if (helpers.showToast) {
+      helpers.showToast('Password encryption library not available. Please refresh the page.', 'danger');
+    }
+    return;
+  }
+
   const newPwd = prompt('Enter new password for user: ' + (row[0] || ''));
   if (newPwd && newPwd.length >= 6) {
     const salt = window.bcrypt.genSaltSync(10);

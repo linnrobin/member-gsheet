@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.33';
+export const APP_VERSION = '1.0.34';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -307,11 +307,21 @@ function renderPage(page) {
       break;
     case 'users':
       main.innerHTML = `
-        <h2 class="h4 mb-3">Users</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h4 mb-0">Users</h2>
+          <button id="add-user-btn" class="btn btn-success" title="Add New User">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus-fill me-1" viewBox="0 0 16 16">
+              <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+              <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+            </svg>
+            Add User
+          </button>
+        </div>
         <div class="table-responsive">
           <table class="table table-striped table-hover table-bordered">
             <thead class="table-dark">
               <tr>
+                <th>No.</th>
                 <th>Username</th>
                 <th>Password</th>
                 <th>Role</th>
@@ -321,13 +331,21 @@ function renderPage(page) {
               </tr>
             </thead>
             <tbody id="user-body">
-              <tr><td colspan="6" class="text-center">Loading...</td></tr>
+              <tr><td colspan="7" class="text-center">Loading...</td></tr>
             </tbody>
           </table>
         </div>
       `;
       setActiveNav('nav-users');
       renderUsersTable();
+      // Setup Add User button after rendering
+      const addUserBtn = document.getElementById('add-user-btn');
+      if (addUserBtn) {
+        addUserBtn.onclick = (e) => {
+          e.preventDefault();
+          openSidePanel('add');
+        };
+      }
       break;
     case 'admins':
       setActiveNav('nav-admins');
@@ -1208,7 +1226,7 @@ async function renderUsersTable() {
     console.error('[renderUsersTable] No valid access token available');
     const tbody = document.getElementById('user-body');
     if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Authentication required. Please re-authorize.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Authentication required. Please re-authorize.</td></tr>';
     }
     return;
   }
@@ -1221,22 +1239,43 @@ async function renderUsersTable() {
     tbody.innerHTML = '';
 
     if (!users || users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No users found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found.</td></tr>';
       return;
     }
 
     users.forEach((row, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
+        <td>${index + 1}</td>
         <td>${row[0] || ''}</td>
         <td>${'*'.repeat((row[1] || '').length)}</td>
         <td><span class="badge bg-secondary">${row[2] || ''}</span></td>
         <td>${formatDate(row[3] || '')}</td>
         <td>${formatDate(row[4] || '')}</td>
         <td class="table-actions">
-          <button class="btn btn-warning btn-sm me-1" onclick="showChangePasswordModal('${row[0]}')">Change Password</button>
-          <button class="btn btn-primary btn-sm me-1" onclick="openSidePanel('edit', ${JSON.stringify(row).replace(/"/g, '&quot;')})">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUser('${row[0]}')">Delete</button>
+          <button class="btn btn-sm btn-warning me-1" onclick="showChangePasswordModal('${row[0]}')" title="Change Password">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key" viewBox="0 0 16 16">
+              <path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/>
+              <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+            </svg>
+          </button>
+          <button class="btn btn-sm btn-info me-1" onclick="openSidePanel('edit', ${JSON.stringify(row).replace(/"/g, '&quot;')}, ${index})" title="Edit User">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+              <path d="M15.502 1.94a.5.5 0 0 1 0 .706l-1 1a.5.5 0 0 1-.708 0l-1-1a.5.5 0 0 1 0-.707l1-1a.5.5 0 0 1 .708 0l1 1zm-1.75 2.456-1-1L4 11.146V12h.854l8.898-8.898z"/>
+              <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+            </svg>
+          </button>
+          <button class="btn btn-sm btn-secondary me-1" onclick="alert('Detail view - Coming soon!')" title="View Details">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+              <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+              <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+            </svg>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="deleteUser('${row[0]}')" title="Delete User">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
+              <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84L14.962 3.5H15.5a.5.5 0 0 0 0-1h-1.004a.58.58 0 0 0-.01 0H11Zm1.538 1-.853 10.66a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.538 3.5h8.924Zm-7.538 1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5Zm2 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5Zm2 0a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5Z"/>
+            </svg>
+          </button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -1245,7 +1284,7 @@ async function renderUsersTable() {
     console.error('[renderUsersTable] Error fetching users:', error);
     const tbody = document.getElementById('user-body');
     if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading users. Please try again.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading users. Please try again.</td></tr>';
     }
     
     // If it's an auth error, show appropriate message
