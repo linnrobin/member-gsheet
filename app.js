@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.32';
+export const APP_VERSION = '1.0.33';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -168,8 +168,7 @@ import {
   openChangePasswordModal,
   openSidePanel,
   closeSidePanel,
-  setUserHelpers,
-  showApp
+  setUserHelpers
 } from './user.js?v=4';
 
 import { validateUser } from './validation.js';
@@ -520,7 +519,7 @@ function renderPagination(current, total, pageSize) {
     a.textContent = i;
     a.onclick = (e) => {
       e.preventDefault();
-      showApp(i, pageSize);
+      renderUsersTable(); // Re-render users table instead of showApp with pagination
     };
     li.appendChild(a);
     ul.appendChild(li);
