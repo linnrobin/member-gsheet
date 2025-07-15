@@ -291,36 +291,127 @@ const sideUserRole = document.getElementById('side-user-role');
 const sideFormError = document.getElementById('side-form-error');
 
 export function openSidePanel(mode, row = [], index = '') {
-  // Check if required elements exist
-  const sidePanelTitle = document.getElementById('side-panel-title');
-  if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
-      !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
-    console.error('Required side panel elements not found');
-    if (showToast) {
-      showToast('Error opening user form. Please refresh the page.', 'danger');
-    }
-    return;
+  // Create a Bootstrap modal instead of using side panel
+  const modalId = 'editUserModal';
+  
+  // Remove existing modal if present
+  const existingModal = document.getElementById(modalId);
+  if (existingModal) {
+    existingModal.remove();
   }
 
-  sidePanel.classList.add('open');
-  sidePanelBackdrop.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  const modalHTML = `
+    <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editUserModalLabel">${mode === 'edit' ? 'Edit User' : 'Add User'}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="userForm">
+              <input type="hidden" id="userIndex" value="${mode === 'edit' ? index : ''}">
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" value="${mode === 'edit' ? (row[0] || '') : ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" value="${mode === 'edit' ? (row[1] || '') : ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="role" class="form-label">Role</label>
+                <select class="form-control" id="role" required>
+                  <option value="">Select Role</option>
+                  <option value="user" ${mode === 'edit' && row[2] === 'user' ? 'selected' : ''}>User</option>
+                  <option value="admin" ${mode === 'edit' && row[2] === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+              </div>
+              <div id="formError" class="text-danger"></div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveUserBtn">${mode === 'edit' ? 'Update' : 'Add'} User</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add modal to body
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+  // Show the modal
+  const modal = new bootstrap.Modal(document.getElementById(modalId));
+  modal.show();
+
+  // Add form submission handler
+  const saveBtn = document.getElementById('saveUserBtn');
+  const formError = document.getElementById('formError');
   
-  if (mode === 'edit') {
-    sidePanelTitle.textContent = 'Edit User';
-    sideUserIndex.value = index;
-    sideUserUsername.value = row[0] || '';
-    sideUserPassword.value = row[1] || '';
-    sideUserRole.value = row[2] || '';
-  } else {
-    sidePanelTitle.textContent = 'Add User';
-    sideUserIndex.value = '';
-    sideUserUsername.value = '';
-    sideUserPassword.value = '';
-    sideUserRole.value = '';
-  }
-  sideFormError.textContent = '';
-  setTimeout(() => sideUserUsername.focus(), 100);
+  saveBtn.onclick = async () => {
+    const userIndex = document.getElementById('userIndex').value;
+    const username = document.getElementById('username').value.trim().toLowerCase();
+    const password = document.getElementById('password').value.trim();
+    const role = document.getElementById('role').value.trim().toLowerCase();
+
+    formError.textContent = '';
+
+    if (!username || !password || !role) {
+      formError.textContent = 'All fields are required.';
+      return;
+    }
+
+    if (password.length < 6) {
+      formError.textContent = 'Password must be at least 6 characters.';
+      return;
+    }
+
+    try {
+      // Wait for bcrypt if not loaded
+      if (!window.bcrypt) {
+        formError.textContent = 'Loading encryption library...';
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!window.bcrypt) {
+          formError.textContent = 'Encryption library not available. Please refresh the page.';
+          return;
+        }
+      }
+
+      const salt = window.bcrypt.genSaltSync(10);
+      const hashedPassword = window.bcrypt.hashSync(password, salt);
+
+      if (userIndex === '') {
+        // Add new user
+        await appendUser({ username, password: hashedPassword, role });
+        if (showToast) showToast('User added successfully!', 'success');
+      } else {
+        // Update existing user
+        const users = await fetchUsers();
+        const created_at = users[parseInt(userIndex, 10)]?.[3] || new Date().toISOString();
+        await updateUser(userIndex, { username, password: hashedPassword, role, created_at });
+        if (showToast) showToast('User updated successfully!', 'success');
+      }
+
+      modal.hide();
+      // Refresh the users table
+      if (typeof renderUsersTable === 'function') {
+        renderUsersTable();
+      } else {
+        // Fallback to page refresh
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error saving user:', error);
+      formError.textContent = 'Error saving user. Please try again.';
+    }
+  };
+
+  // Clean up modal when hidden
+  document.getElementById(modalId).addEventListener('hidden.bs.modal', () => {
+    document.getElementById(modalId).remove();
+  });
 }
 
 export function closeSidePanel() {
@@ -414,19 +505,27 @@ function showConfirm(message) {
 }
 
 export function openChangePasswordModal(index, row) {
-  // Check if bcrypt is available
+  // Wait for bcrypt to load if not available
   if (!window.bcrypt) {
-    console.error('bcrypt library not loaded');
-    if (showToast) {
-      showToast('Password encryption library not available. Please refresh the page.', 'danger');
-    }
+    console.log('bcrypt not loaded yet, waiting...');
+    setTimeout(() => {
+      if (window.bcrypt) {
+        openChangePasswordModal(index, row);
+      } else {
+        console.error('bcrypt library failed to load');
+        if (showToast) {
+          showToast('Password encryption library not available. Please refresh the page and try again.', 'danger');
+        }
+      }
+    }, 1000);
     return;
   }
 
   const newPwd = prompt('Enter new password for user: ' + (row[0] || ''));
   if (newPwd && newPwd.length >= 6) {
-    const salt = window.bcrypt.genSaltSync(10);
-    const hashedPassword = window.bcrypt.hashSync(newPwd.trim(), salt);
+    try {
+      const salt = window.bcrypt.genSaltSync(10);
+      const hashedPassword = window.bcrypt.hashSync(newPwd.trim(), salt);
     fetchUsers().then(users => {
       const user = users[index];
       if (!user) return;
@@ -452,6 +551,12 @@ export function openChangePasswordModal(index, row) {
         showApp();
       }).catch(() => showToast('Error changing password.', 'danger'));
     });
+    } catch (error) {
+      console.error('Error with bcrypt:', error);
+      if (showToast) {
+        showToast('Error encrypting password. Please try again.', 'danger');
+      }
+    }
   } else if (newPwd !== null) {
     showToast('Password must be at least 6 characters.', 'danger');
   }

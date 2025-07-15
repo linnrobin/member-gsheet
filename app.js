@@ -169,7 +169,7 @@ import {
   openSidePanel,
   closeSidePanel,
   setUserHelpers
-} from './user.js?v=5';
+} from './user.js?v=6';
 
 import { validateUser } from './validation.js';
 
