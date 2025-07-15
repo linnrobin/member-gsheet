@@ -444,7 +444,12 @@ export async function fetchUsers() {
       spreadsheetId: CONFIG.USERS_SHEET_ID,
       range: CONFIG.USERS_RANGE,
     });
-    return res.result.values || [];
+    const users = res.result.values || [];
+    
+    // Store globally for onclick handlers
+    window.allUsers = users;
+    
+    return users;
   } catch (error) {
     console.error('[fetchUsers] Error fetching users:', error);
     throw error;

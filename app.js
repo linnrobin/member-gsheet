@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.31';
+export const APP_VERSION = '1.0.32';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -119,16 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return el;
   })();
 
-  function openSidePanel() {
-    sidePanel.classList.add('open');
-    sidePanelBackdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSidePanel() {
-    sidePanel.classList.remove('open');
-    sidePanelBackdrop.classList.remove('open');
-    document.body.style.overflow = '';
-  }
+  // Removed duplicate openSidePanel and closeSidePanel functions - using imports from user.js
+  
   if (hamburger) {
     hamburger.addEventListener('click', openSidePanel);
   }
@@ -174,13 +166,76 @@ import {
   deleteUserAt,
   updateNavVisibility,
   openChangePasswordModal,
-  setUserHelpers
-} from './user.js?v=2';
+  openSidePanel,
+  closeSidePanel,
+  setUserHelpers,
+  showApp
+} from './user.js?v=4';
 
 import { validateUser } from './validation.js';
 
 let isAuthorized = false; // Tracks authorization state
 let currentUserRole = null; // Tracks current user's role
+
+// Global functions for onclick handlers in dynamically generated HTML
+window.showChangePasswordModal = function(username) {
+  const users = window.allUsers || [];
+  const userIndex = users.findIndex(user => user[0] === username);
+  if (userIndex !== -1) {
+    openChangePasswordModal(userIndex, users[userIndex]);
+  }
+};
+
+window.deleteUser = async function(username) {
+  const users = window.allUsers || [];
+  const userIndex = users.findIndex(user => user[0] === username);
+  if (userIndex !== -1) {
+    const result = confirm(`Are you sure you want to delete user "${username}"?`);
+    if (result) {
+      try {
+        await deleteUserAt(userIndex);
+        showToast('User deleted successfully', 'success');
+        const currentPage = new URLSearchParams(window.location.hash.substring(1)).get('page') || 'users';
+        renderPage(currentPage);
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Error deleting user', 'danger');
+      }
+    }
+  }
+};
+
+window.openChangePasswordModalFromDetail = function(userIndex, username) {
+  const users = window.allUsers || [];
+  if (users[userIndex]) {
+    openChangePasswordModal(userIndex, users[userIndex]);
+  }
+};
+
+window.openSidePanelFromDetail = function(userIndex) {
+  const users = window.allUsers || [];
+  if (users[userIndex]) {
+    openSidePanel('edit', users[userIndex], userIndex);
+  }
+};
+
+window.deleteUserFromDetail = async function(userIndex, username, role) {
+  const result = confirm(`Are you sure you want to delete user "${username}" with role "${role}"?`);
+  if (result) {
+    try {
+      await deleteUserAt(userIndex);
+      showToast('User deleted successfully', 'success');
+      const currentPage = new URLSearchParams(window.location.hash.substring(1)).get('page') || 'users';
+      renderPage(currentPage);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      showToast('Error deleting user', 'danger');
+    }
+  }
+};
+
+// Make functions available globally
+window.openSidePanel = openSidePanel;
 
 // --- Navigation & Routing ---
 const NAV_ROUTES = {
@@ -485,116 +540,7 @@ const sideUserPassword = document.getElementById('side-user-password');
 const sideUserRole = document.getElementById('side-user-role');
 const sideFormError = document.getElementById('side-form-error');
 
-function openSidePanel(mode, row = [], index = '') {
-  // Check if user is authorized and logged in
-  const username = sessionStorage.getItem('username');
-  if (!isAuthorized || !username) {
-    showToast('Please log in to access user management.', 'warning');
-    return;
-  }
-  
-  // Get all required elements
-  const sidePanel = document.getElementById('side-panel');
-  const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
-  const sidePanelTitle = document.getElementById('side-panel-title');
-  const sideUserIndex = document.getElementById('side-user-index');
-  const sideUserUsername = document.getElementById('side-user-username');
-  const sideUserPassword = document.getElementById('side-user-password');
-  const sideUserRole = document.getElementById('side-user-role');
-  const sideFormError = document.getElementById('side-form-error');
-
-  if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
-      !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
-    console.error('[openSidePanel] Required side panel elements not found');
-    debugSidePanelElements(); // Debug what's missing
-    showToast('Error opening user form. Please refresh the page.', 'danger');
-    return;
-  }
-
-  // All elements found, proceed with opening
-  sidePanel.classList.add('open');
-  sidePanelBackdrop.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  
-  if (mode === 'edit') {
-    sidePanelTitle.textContent = 'Edit User';
-    sideUserIndex.value = index;
-    sideUserUsername.value = row[0] || '';
-    sideUserPassword.value = row[1] || '';
-    sideUserRole.value = row[2] || '';
-  } else {
-    sidePanelTitle.textContent = 'Add User';
-    sideUserIndex.value = '';
-    sideUserUsername.value = '';
-    sideUserPassword.value = '';
-    sideUserRole.value = '';
-  }
-  sideFormError.textContent = '';
-  setTimeout(() => {
-    if (sideUserUsername) sideUserUsername.focus();
-  }, 100);
-}
-
-function closeSidePanel() {
-  const sidePanel = document.getElementById('side-panel');
-  const sidePanelBackdrop = document.getElementById('side-panel-backdrop');
-  
-  if (sidePanel) sidePanel.classList.remove('open');
-  if (sidePanelBackdrop) sidePanelBackdrop.classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-if (sidePanelClose) sidePanelClose.onclick = closeSidePanel;
-if (sidePanelBackdrop) sidePanelBackdrop.onclick = closeSidePanel;
-if (document.getElementById('side-cancel-user-btn')) document.getElementById('side-cancel-user-btn').onclick = closeSidePanel;
-
-if (sideUserForm) {
-  sideUserForm.onsubmit = async (e) => {
-    e.preventDefault();
-    const sideFormError = document.getElementById('side-form-error');
-    const sideUserIndex = document.getElementById('side-user-index');
-    const sideUserUsername = document.getElementById('side-user-username');
-    const sideUserPassword = document.getElementById('side-user-password');
-    const sideUserRole = document.getElementById('side-user-role');
-    
-    if (!sideFormError || !sideUserIndex || !sideUserUsername || !sideUserPassword || !sideUserRole) {
-      console.error('[sideUserForm.onsubmit] Required form elements not found');
-      showToast('Error processing form. Please refresh the page.', 'danger');
-      return;
-    }
-    
-    sideFormError.textContent = '';
-    const index = sideUserIndex.value;
-    let username = sideUserUsername.value.trim().toLowerCase();
-    let password = sideUserPassword.value.trim();
-    let role = sideUserRole.value.trim().toLowerCase();
-    const errors = validateUser({ username, password, role });
-    if (Object.keys(errors).length > 0) {
-      sideFormError.textContent = Object.values(errors).join(' ');
-      return;
-    }
-    try {
-      // Hash password before saving
-      const salt = window.bcrypt.genSaltSync(10);
-      const hashedPassword = window.bcrypt.hashSync(password, salt);
-      if (index === '') {
-        await appendUser({ username, password: hashedPassword, role });
-        showToast('User added successfully!', 'success');
-      } else {
-        const users = await fetchUsers();
-        const created_at = users[parseInt(index, 10)]?.[3] || new Date().toISOString();
-        await updateUser(index, { username, password: hashedPassword, role, created_at });
-        showToast('User updated successfully!', 'success');
-      }
-      closeSidePanel();
-      showApp();
-    } catch (err) {
-      if (sideFormError) sideFormError.textContent = 'Error saving user.';
-      showToast('Error saving user.', 'danger');
-      console.error(err);
-    }
-  };
-}
+// Removed duplicate openSidePanel and closeSidePanel functions - using imports from user.js
 
 function populateForm(row, index) {
   const userIndex = document.getElementById('user-index');
@@ -1195,44 +1141,12 @@ async function renderUserDetailPage(userIndex) {
 async function openChangePasswordModalFromDetail(userIndex, username) {
   const users = await fetchUsers();
   const user = users[parseInt(userIndex, 10)];
-  if (user) {
+  if ( user) {
     openChangePasswordModal(userIndex, user);
   }
 }
 
-async function openSidePanelFromDetail(userIndex) {
-  const users = await fetchUsers();
-  const user = users[parseInt(userIndex, 10)];
-  if (user) {
-    openSidePanel('edit', user, userIndex);
-  }
-}
-
-async function deleteUserFromDetail(userIndex, username, role) {
-  const confirmed = await showConfirm(`Delete user "${username}"?`);
-  if (confirmed) {
-    try {
-      await deleteUserAt(userIndex);
-      showToast('User deleted successfully!', 'success');
-      if (role === 'admin') {
-        logAdminAction(
-          `deleted admin`,
-          `deleted admin '${username}' from detail page at ${getLogTime()}`
-        );
-      } else {
-        logUserAction(
-          `deleted user`,
-          `deleted user '${username}' from detail page at ${getLogTime()}`
-        );
-      }
-      // Redirect back to users list
-      window.location.hash = 'users';
-    } catch (err) {
-      showToast('Error deleting user.', 'danger');
-      console.error(err);
-    }
-  }
-}
+// Removed duplicate functions - using global versions instead
 
 function getLogTime() {
   const now = new Date();
