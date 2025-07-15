@@ -296,8 +296,8 @@ export function openSidePanel(mode, row = [], index = '') {
   if (!sidePanel || !sidePanelBackdrop || !sidePanelTitle || !sideUserIndex || 
       !sideUserUsername || !sideUserPassword || !sideUserRole || !sideFormError) {
     console.error('Required side panel elements not found');
-    if (helpers.showToast) {
-      helpers.showToast('Error opening user form. Please refresh the page.', 'danger');
+    if (showToast) {
+      showToast('Error opening user form. Please refresh the page.', 'danger');
     }
     return;
   }
@@ -417,8 +417,8 @@ export function openChangePasswordModal(index, row) {
   // Check if bcrypt is available
   if (!window.bcrypt) {
     console.error('bcrypt library not loaded');
-    if (helpers.showToast) {
-      helpers.showToast('Password encryption library not available. Please refresh the page.', 'danger');
+    if (showToast) {
+      showToast('Password encryption library not available. Please refresh the page.', 'danger');
     }
     return;
   }

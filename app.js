@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.34';
+export const APP_VERSION = '1.0.35';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Ensure all DOM event assignments happen after DOM is loaded
@@ -169,7 +169,7 @@ import {
   openSidePanel,
   closeSidePanel,
   setUserHelpers
-} from './user.js?v=4';
+} from './user.js?v=5';
 
 import { validateUser } from './validation.js';
 
