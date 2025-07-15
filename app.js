@@ -24,13 +24,14 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.37';
+export const APP_VERSION = '1.0.39';
 import { renderAdminsPage, showAdmins } from './admin.js';
+import { initCryptoUtils } from './crypto-utils.js';
 
 // Initialize bcrypt library
 function initializeBcrypt() {
   let checkCount = 0;
-  const maxChecks = 50; // Try for up to 15 seconds (50 * 300ms) - more time for multiple CDNs
+  const maxChecks = 20; // Try for up to 6 seconds (20 * 300ms)
   
   const checkBcrypt = () => {
     checkCount++;
@@ -43,13 +44,6 @@ function initializeBcrypt() {
         const testHash = window.bcrypt.hashSync('test', testSalt);
         if (testHash) {
           console.log('✅ bcrypt functionality verified');
-          // Check if it's the fallback implementation
-          if (testHash.startsWith('fallback_')) {
-            console.log('⚠️ Using fallback bcrypt implementation - passwords will be weakly hashed');
-            if (showToast) {
-              showToast('Using basic password encryption. For production use, ensure bcrypt CDN is accessible.', 'warning');
-            }
-          }
           return;
         }
       } catch (error) {
@@ -60,11 +54,33 @@ function initializeBcrypt() {
     if (checkCount < maxChecks) {
       setTimeout(checkBcrypt, 300);
     } else {
-      console.error('❌ bcrypt library failed to load after', maxChecks * 300, 'ms');
-      // Show a warning to the user
+      console.log('⚠️ bcrypt not available from CDN, initializing local crypto utils...');
+      
+      // Initialize local crypto utilities as fallback
+      initCryptoUtils();
+      
+      // Verify the fallback works
+      if (window.bcrypt) {
+        try {
+          const testSalt = window.bcrypt.genSaltSync(10);
+          const testHash = window.bcrypt.hashSync('test', testSalt);
+          if (testHash) {
+            console.log('✅ Local crypto utils initialized successfully');
+            if (showToast) {
+              showToast('Using local password encryption (secure)', 'info');
+            }
+            return;
+          }
+        } catch (error) {
+          console.error('❌ Local crypto utils failed:', error);
+        }
+      }
+      
+      // If everything fails
+      console.error('❌ All password encryption methods failed');
       setTimeout(() => {
         if (showToast) {
-          showToast('Warning: Password encryption library not loaded. Password features disabled. Please check your internet connection and refresh.', 'danger');
+          showToast('Critical error: Password encryption unavailable. Please refresh the page.', 'danger');
         }
       }, 1000);
     }
@@ -219,7 +235,7 @@ import {
   openSidePanel,
   closeSidePanel,
   setUserHelpers
-} from './user.js?v=7';
+} from './user.js?v=8';
 
 import { validateUser } from './validation.js';
 
