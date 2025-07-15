@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.41';
+export const APP_VERSION = '1.0.42';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -152,24 +152,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Raw sheet data:', rows);
         console.log('Available users in sheet:', rows.map((row, idx) => ({ 
           index: idx,
-          col0: row[0], 
-          col1_username: row[1], 
-          col2_password: row[2] ? (row[2].startsWith('$2') ? 'hashed' : 'plain') : 'empty',
-          col3_role: row[3],
-          col4_created: row[4]
+          col0_username: row[0], 
+          col1_password: row[1], 
+          col2_role: row[2],
+          col3_created: row[3],
+          col4_updated: row[4],
+          col5_note: row[5]
         })));
         
         // Find user and validate password using bcrypt comparison
         let match = null;
         for (const row of rows) {
-          const storedUsername = row[1]?.trim();
-          const storedPassword = row[2]?.trim();
+          const storedUsername = row[0]?.trim(); // Column A: Username
+          const storedPassword = row[1]?.trim(); // Column B: Password
           
           console.log(`Checking user: "${storedUsername}" against input: "${username}"`);
           
           if (storedUsername === username) {
             console.log(`Found matching username. Stored password format:`, storedPassword ? (storedPassword.startsWith('$2') ? 'hashed' : 'plain') : 'empty');
             console.log(`Stored password length:`, storedPassword ? storedPassword.length : 0);
+            console.log(`Stored password value:`, storedPassword); // Temporary debug - remove later
             
             // Ensure bcrypt is available
             if (!window.bcrypt) {
@@ -205,10 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const hashedPassword = window.bcrypt.hashSync(password, salt);
                     // Update the password in the sheet
                     await updateUser(rows.indexOf(row), {
-                      username: row[1],
+                      username: row[0],
                       password: hashedPassword,
-                      role: row[3] || 'user',
-                      created_at: row[4] || new Date().toISOString()
+                      role: row[2] || 'user',
+                      created_at: row[3] || new Date().toISOString()
                     });
                     console.log('Password converted to hash for user:', username);
                   } catch (updateError) {
