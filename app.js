@@ -141,10 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   }
-  if (document.getElementById('login-button')) {
+  const loginButtonElement = document.getElementById('login-button');
+  if (loginButtonElement) {
     console.log('🎯 Setting up login button click handler...');
-    document.getElementById('login-button').onclick = async () => {
-      console.log('🚀 LOGIN BUTTON CLICKED!');
+    
+    // Try multiple ways to attach the event
+    loginButtonElement.onclick = async (event) => {
+      console.log('🚀 LOGIN BUTTON CLICKED (onclick)!');
+      event.preventDefault();
+      
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value.trim();
       console.log(`📝 Form data captured - Username: "${username}", Password: "${password}"`);
