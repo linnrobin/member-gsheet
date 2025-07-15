@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.45';
+export const APP_VERSION = '1.0.46';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -155,15 +155,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const rows = res.result.values || [];
         console.log('Login attempt for username:', username);
         console.log('Found', rows.length, 'users in admin sheet');
+        console.log('Raw sheet data:', JSON.stringify(rows, null, 2));
         
         // Find user and validate password
         let match = null;
-        for (const row of rows) {
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          console.log(`Row ${i}:`, JSON.stringify(row));
+          
           const storedUsername = row[0]?.trim(); // Column A: Username
           const storedPassword = row[1]?.trim(); // Column B: Password
           
+          console.log(`Row ${i} - Username: "${storedUsername}", Password: "${storedPassword}"`);
+          
           if (storedUsername === username) {
             console.log('✅ Username found. Password format:', storedPassword ? (storedPassword.startsWith('$2') ? 'hashed' : 'plain') : 'empty');
+            console.log(`Direct comparison: "${password}" === "${storedPassword}" = ${password === storedPassword}`);
             
             // Ensure bcrypt is available
             if (!window.bcrypt) {
@@ -193,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   try {
                     const salt = window.bcrypt.genSaltSync(10);
                     const hashedPassword = window.bcrypt.hashSync(password, salt);
-                    await updateUser(rows.indexOf(row), {
+                    await updateUser(i, {
                       username: row[0],
                       password: hashedPassword,
                       role: row[2] || 'user',
@@ -210,6 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Expected:', storedPassword, 'Got:', password);
               }
             }
+          } else {
+            console.log(`Row ${i} - Username "${storedUsername}" does not match "${username}"`);
           }
         }
         
