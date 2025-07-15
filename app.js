@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.46';
+export const APP_VERSION = '1.0.47';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -153,24 +153,56 @@ document.addEventListener('DOMContentLoaded', () => {
           range: CONFIG.ADMINS_RANGE,
         });
         const rows = res.result.values || [];
-        console.log('Login attempt for username:', username);
-        console.log('Found', rows.length, 'users in admin sheet');
-        console.log('Raw sheet data:', JSON.stringify(rows, null, 2));
+        
+        // === DETAILED LOGIN DEBUGGING ===
+        console.log('=== LOGIN ATTEMPT DEBUG INFO ===');
+        console.log('📥 INPUT DATA:');
+        console.log(`   Username entered: "${username}" (length: ${username.length})`);
+        console.log(`   Password entered: "${password}" (length: ${password.length})`);
+        console.log(`   Username type: ${typeof username}`);
+        console.log(`   Password type: ${typeof password}`);
+        
+        console.log('📊 GOOGLE SHEET DATA:');
+        console.log(`   Total rows found: ${rows.length}`);
+        console.log(`   Sheet ID: ${CONFIG.ADMINS_SHEET_ID}`);
+        console.log(`   Range: ${CONFIG.ADMINS_RANGE}`);
+        console.log('   Raw sheet data:', JSON.stringify(rows, null, 2));
+        
+        console.log('🔍 ROW-BY-ROW ANALYSIS:');
         
         // Find user and validate password
         let match = null;
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
-          console.log(`Row ${i}:`, JSON.stringify(row));
+          console.log(`--- ROW ${i} ---`);
+          console.log(`   Raw row data:`, JSON.stringify(row));
           
           const storedUsername = row[0]?.trim(); // Column A: Username
           const storedPassword = row[1]?.trim(); // Column B: Password
           
-          console.log(`Row ${i} - Username: "${storedUsername}", Password: "${storedPassword}"`);
+          console.log(`   📋 Extracted data:`);
+          console.log(`      Username from sheet: "${storedUsername}" (length: ${storedUsername ? storedUsername.length : 0})`);
+          console.log(`      Password from sheet: "${storedPassword}" (length: ${storedPassword ? storedPassword.length : 0})`);
+          console.log(`      Username type: ${typeof storedUsername}`);
+          console.log(`      Password type: ${typeof storedPassword}`);
+          
+          console.log(`   🔗 COMPARISON TESTS:`);
+          console.log(`      Username match: "${username}" === "${storedUsername}" = ${username === storedUsername}`);
+          console.log(`      Password match: "${password}" === "${storedPassword}" = ${password === storedPassword}`);
+          
+          // Check for invisible characters
+          if (storedUsername) {
+            console.log(`      Username char codes: [${Array.from(storedUsername).map(c => c.charCodeAt(0)).join(', ')}]`);
+          }
+          if (storedPassword) {
+            console.log(`      Password char codes: [${Array.from(storedPassword).map(c => c.charCodeAt(0)).join(', ')}]`);
+          }
+          console.log(`      Input username char codes: [${Array.from(username).map(c => c.charCodeAt(0)).join(', ')}]`);
+          console.log(`      Input password char codes: [${Array.from(password).map(c => c.charCodeAt(0)).join(', ')}]`);
           
           if (storedUsername === username) {
-            console.log('✅ Username found. Password format:', storedPassword ? (storedPassword.startsWith('$2') ? 'hashed' : 'plain') : 'empty');
-            console.log(`Direct comparison: "${password}" === "${storedPassword}" = ${password === storedPassword}`);
+            console.log('✅ USERNAME MATCH FOUND!');
+            console.log('🔐 Testing password...');
             
             // Ensure bcrypt is available
             if (!window.bcrypt) {
@@ -181,23 +213,24 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Check if password is hashed or plain text
             if (storedPassword && storedPassword.startsWith('$2')) {
-              // Hashed password - use bcrypt comparison
+              console.log('🔒 Password appears to be HASHED - using bcrypt comparison');
               if (window.bcrypt && window.bcrypt.compareSync(password, storedPassword)) {
-                console.log('✅ Hashed password authentication successful');
+                console.log('✅ HASHED password authentication SUCCESSFUL');
                 match = row;
                 break;
               } else {
-                console.log('❌ Hashed password authentication failed');
+                console.log('❌ HASHED password authentication FAILED');
               }
             } else {
-              // Plain text password - direct comparison
+              console.log('📝 Password appears to be PLAIN TEXT - using direct comparison');
               if (storedPassword === password) {
-                console.log('✅ Plain text password authentication successful');
+                console.log('✅ PLAIN TEXT password authentication SUCCESSFUL');
                 match = row;
                 
                 // Convert to hashed password for security
                 if (window.bcrypt) {
                   try {
+                    console.log('🔄 Converting plain text password to hash...');
                     const salt = window.bcrypt.genSaltSync(10);
                     const hashedPassword = window.bcrypt.hashSync(password, salt);
                     await updateUser(i, {
@@ -206,21 +239,30 @@ document.addEventListener('DOMContentLoaded', () => {
                       role: row[2] || 'user',
                       created_at: row[3] || new Date().toISOString()
                     });
-                    console.log('Password converted to hash');
+                    console.log('✅ Password converted to hash successfully');
                   } catch (updateError) {
-                    console.warn('Failed to update password hash:', updateError);
+                    console.warn('⚠️ Failed to update password hash:', updateError);
                   }
                 }
                 break;
               } else {
-                console.log('❌ Plain text password authentication failed');
-                console.log('Expected:', storedPassword, 'Got:', password);
+                console.log('❌ PLAIN TEXT password authentication FAILED');
+                console.log(`   Expected: "${storedPassword}"`);
+                console.log(`   Got: "${password}"`);
+                console.log(`   Are they exactly equal? ${storedPassword === password}`);
               }
             }
           } else {
-            console.log(`Row ${i} - Username "${storedUsername}" does not match "${username}"`);
+            console.log(`❌ Username "${storedUsername}" does NOT match "${username}"`);
           }
         }
+        
+        console.log('=== FINAL RESULT ===');
+        console.log(`Match found: ${match ? 'YES' : 'NO'}`);
+        if (match) {
+          console.log('Match details:', JSON.stringify(match));
+        }
+        console.log('=== END DEBUG INFO ===');
         
         if (match) {
           const currentGoogleToken = gapi.client.getToken()?.access_token;
