@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.43';
+export const APP_VERSION = '1.0.44';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -149,77 +149,61 @@ document.addEventListener('DOMContentLoaded', () => {
           range: CONFIG.ADMINS_RANGE,
         });
         const rows = res.result.values || [];
-        console.log('Raw sheet data:', rows);
-        console.log('Available users in sheet:', rows.map((row, idx) => ({ 
-          index: idx,
-          col0_username: row[0], 
-          col1_password: row[1], 
-          col2_role: row[2],
-          col3_created: row[3],
-          col4_updated: row[4],
-          col5_note: row[5]
-        })));
+        console.log('Login attempt for username:', username);
+        console.log('Found', rows.length, 'users in admin sheet');
         
-        // Find user and validate password using bcrypt comparison
+        // Find user and validate password
         let match = null;
         for (const row of rows) {
           const storedUsername = row[0]?.trim(); // Column A: Username
           const storedPassword = row[1]?.trim(); // Column B: Password
           
-          console.log(`Checking user: "${storedUsername}" against input: "${username}"`);
-          
           if (storedUsername === username) {
-            console.log(`Found matching username. Stored password format:`, storedPassword ? (storedPassword.startsWith('$2') ? 'hashed' : 'plain') : 'empty');
-            console.log(`Stored password length:`, storedPassword ? storedPassword.length : 0);
-            console.log(`Stored password value:`, storedPassword); // Temporary debug - remove later
+            console.log('✅ Username found. Password format:', storedPassword ? (storedPassword.startsWith('$2') ? 'hashed' : 'plain') : 'empty');
             
             // Ensure bcrypt is available
             if (!window.bcrypt) {
-              // If bcrypt not ready, try to initialize it
-              console.log('bcrypt not ready during login, initializing...');
+              console.log('Initializing crypto utils...');
               const { initCryptoUtils } = await import('./crypto-utils.js');
               initCryptoUtils();
             }
             
-            // Check if password is hashed (starts with $2a$ or similar) or plain text
+            // Check if password is hashed or plain text
             if (storedPassword && storedPassword.startsWith('$2')) {
               // Hashed password - use bcrypt comparison
-              console.log('Using bcrypt comparison for hashed password');
               if (window.bcrypt && window.bcrypt.compareSync(password, storedPassword)) {
-                console.log('✅ Password hash comparison successful');
+                console.log('✅ Hashed password authentication successful');
                 match = row;
                 break;
               } else {
-                console.log('❌ Password hash comparison failed');
+                console.log('❌ Hashed password authentication failed');
               }
             } else {
-              // Plain text password (legacy) - direct comparison
-              console.log('Using direct comparison for plain text password');
-              console.log(`Comparing: "${password}" === "${storedPassword}"`);
+              // Plain text password - direct comparison
               if (storedPassword === password) {
-                console.log('✅ Plain text password comparison successful');
+                console.log('✅ Plain text password authentication successful');
                 match = row;
-                // Update to hashed password
-                console.log('Converting plain text password to hashed for user:', username);
+                
+                // Convert to hashed password for security
                 if (window.bcrypt) {
                   try {
                     const salt = window.bcrypt.genSaltSync(10);
                     const hashedPassword = window.bcrypt.hashSync(password, salt);
-                    // Update the password in the sheet
                     await updateUser(rows.indexOf(row), {
                       username: row[0],
                       password: hashedPassword,
                       role: row[2] || 'user',
                       created_at: row[3] || new Date().toISOString()
                     });
-                    console.log('Password converted to hash for user:', username);
+                    console.log('Password converted to hash');
                   } catch (updateError) {
                     console.warn('Failed to update password hash:', updateError);
                   }
                 }
                 break;
               } else {
-                console.log('❌ Plain text password comparison failed');
+                console.log('❌ Plain text password authentication failed');
+                console.log('Expected:', storedPassword, 'Got:', password);
               }
             }
           }
