@@ -58,33 +58,51 @@ export class SimpleCrypto {
   }
 
   static compareSync(password, hash) {
-    if (!hash || hash.length < 10) return false;
+    console.log('SimpleCrypto.compareSync called with:', { password: '***', hash: hash });
+    
+    if (!hash || hash.length < 10) {
+      console.log('Hash too short or empty');
+      return false;
+    }
     
     // Handle different hash formats
     if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+      console.log('Detected bcrypt-style hash format');
       // Real bcrypt hash format - extract salt and compare
       const parts = hash.split('$');
       if (parts.length >= 4) {
         // For bcrypt format: $2a$rounds$saltAndHash
         // Extract salt (first 29 chars after $2a$rounds$)
         const salt = hash.substring(0, 29);
+        console.log('Extracted salt:', salt);
         const testHash = this.hashSync(password, salt);
-        return testHash === hash;
+        console.log('Generated test hash:', testHash);
+        const result = testHash === hash;
+        console.log('Bcrypt comparison result:', result);
+        return result;
       }
     }
     
     // SimpleCrypto hash format - extract salt and compare
     if (hash.includes('$')) {
+      console.log('Detected SimpleCrypto hash format');
       const parts = hash.split('$');
       if (parts.length >= 4) {
         const salt = parts.slice(0, 4).join('$');
+        console.log('Extracted salt:', salt);
         const testHash = this.hashSync(password, salt);
-        return testHash === hash;
+        console.log('Generated test hash:', testHash);
+        const result = testHash === hash;
+        console.log('SimpleCrypto comparison result:', result);
+        return result;
       }
     }
     
     // Legacy format or direct comparison
-    return password === hash;
+    console.log('Using direct comparison');
+    const result = password === hash;
+    console.log('Direct comparison result:', result);
+    return result;
   }
 }
 

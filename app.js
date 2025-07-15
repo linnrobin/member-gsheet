@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.40';
+export const APP_VERSION = '1.0.41';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -149,12 +149,27 @@ document.addEventListener('DOMContentLoaded', () => {
           range: CONFIG.ADMINS_RANGE,
         });
         const rows = res.result.values || [];
+        console.log('Raw sheet data:', rows);
+        console.log('Available users in sheet:', rows.map((row, idx) => ({ 
+          index: idx,
+          col0: row[0], 
+          col1_username: row[1], 
+          col2_password: row[2] ? (row[2].startsWith('$2') ? 'hashed' : 'plain') : 'empty',
+          col3_role: row[3],
+          col4_created: row[4]
+        })));
         
         // Find user and validate password using bcrypt comparison
         let match = null;
         for (const row of rows) {
-          if (row[1]?.trim() === username) {
-            const storedPassword = row[2]?.trim();
+          const storedUsername = row[1]?.trim();
+          const storedPassword = row[2]?.trim();
+          
+          console.log(`Checking user: "${storedUsername}" against input: "${username}"`);
+          
+          if (storedUsername === username) {
+            console.log(`Found matching username. Stored password format:`, storedPassword ? (storedPassword.startsWith('$2') ? 'hashed' : 'plain') : 'empty');
+            console.log(`Stored password length:`, storedPassword ? storedPassword.length : 0);
             
             // Ensure bcrypt is available
             if (!window.bcrypt) {
@@ -167,13 +182,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check if password is hashed (starts with $2a$ or similar) or plain text
             if (storedPassword && storedPassword.startsWith('$2')) {
               // Hashed password - use bcrypt comparison
+              console.log('Using bcrypt comparison for hashed password');
               if (window.bcrypt && window.bcrypt.compareSync(password, storedPassword)) {
+                console.log('✅ Password hash comparison successful');
                 match = row;
                 break;
+              } else {
+                console.log('❌ Password hash comparison failed');
               }
             } else {
               // Plain text password (legacy) - direct comparison
+              console.log('Using direct comparison for plain text password');
+              console.log(`Comparing: "${password}" === "${storedPassword}"`);
               if (storedPassword === password) {
+                console.log('✅ Plain text password comparison successful');
                 match = row;
                 // Update to hashed password
                 console.log('Converting plain text password to hashed for user:', username);
@@ -194,6 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   }
                 }
                 break;
+              } else {
+                console.log('❌ Plain text password comparison failed');
               }
             }
           }
