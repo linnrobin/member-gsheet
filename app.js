@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.44';
+export const APP_VERSION = '1.0.45';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -144,6 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       try {
+        // Check current authorization status
+        const currentToken = gapi.client.getToken();
+        console.log('Current token status:', currentToken ? 'exists' : 'missing');
+        
         const res = await gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: CONFIG.ADMINS_SHEET_ID,
           range: CONFIG.ADMINS_RANGE,
@@ -224,7 +228,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         console.error("[app.js] Login error:", err);
-        errorBox.textContent = 'Login error: ' + (err.result?.error?.message || err.message || JSON.stringify(err));
+        
+        // Handle specific Google API errors
+        if (err.result && err.result.error) {
+          const errorCode = err.result.error.code;
+          const errorMessage = err.result.error.message;
+          
+          if (errorCode === 403) {
+            errorBox.textContent = 'Access denied. Please check Google Sheets permissions and re-authorize.';
+            // Force re-authorization
+            document.getElementById('authorize-btn').style.display = 'inline-block';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('deauthorize-btn').style.display = 'none';
+          } else {
+            errorBox.textContent = `API Error (${errorCode}): ${errorMessage}`;
+          }
+        } else {
+          errorBox.textContent = 'Login error: ' + (err.message || 'Unknown error');
+        }
+        
         await showAlert('Login failed: ' + (err.result?.error?.message || err.message || "An unknown error occurred."));
       }
     };
