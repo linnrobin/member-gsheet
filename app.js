@@ -24,13 +24,13 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.35';
+export const APP_VERSION = '1.0.37';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
 // Initialize bcrypt library
 function initializeBcrypt() {
   let checkCount = 0;
-  const maxChecks = 20; // Try for up to 6 seconds (20 * 300ms)
+  const maxChecks = 50; // Try for up to 15 seconds (50 * 300ms) - more time for multiple CDNs
   
   const checkBcrypt = () => {
     checkCount++;
@@ -43,6 +43,13 @@ function initializeBcrypt() {
         const testHash = window.bcrypt.hashSync('test', testSalt);
         if (testHash) {
           console.log('✅ bcrypt functionality verified');
+          // Check if it's the fallback implementation
+          if (testHash.startsWith('fallback_')) {
+            console.log('⚠️ Using fallback bcrypt implementation - passwords will be weakly hashed');
+            if (showToast) {
+              showToast('Using basic password encryption. For production use, ensure bcrypt CDN is accessible.', 'warning');
+            }
+          }
           return;
         }
       } catch (error) {
@@ -57,7 +64,7 @@ function initializeBcrypt() {
       // Show a warning to the user
       setTimeout(() => {
         if (showToast) {
-          showToast('Warning: Password encryption library not loaded. Some features may not work. Please refresh the page.', 'warning');
+          showToast('Warning: Password encryption library not loaded. Password features disabled. Please check your internet connection and refresh.', 'danger');
         }
       }, 1000);
     }
