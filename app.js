@@ -23,6 +23,8 @@ function renderSettingsPage() {
   };
 }
 //app.js
+console.log('🔥 app.js script starting to load...');
+
 // Versioning
 export const APP_VERSION = '1.0.47';
 import { renderAdminsPage, showAdmins } from './admin.js';
@@ -92,10 +94,16 @@ function initializeBcrypt() {
 
 // Ensure all DOM event assignments happen after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('🟢 DOM Content Loaded - app.js v1.0.47 initializing...');
+  
   // Check bcrypt library availability
   initializeBcrypt();
   
   // --- All DOM event assignments below ---
+  console.log('🔍 Checking for login button...');
+  const loginButton = document.getElementById('login-button');
+  console.log('Login button found:', !!loginButton);
+  
   if (document.getElementById('logout-btn')) {
     document.getElementById('logout-btn').onclick = () => {
       logoutUser();
@@ -134,9 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
   if (document.getElementById('login-button')) {
+    console.log('🎯 Setting up login button click handler...');
     document.getElementById('login-button').onclick = async () => {
+      console.log('🚀 LOGIN BUTTON CLICKED!');
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value.trim();
+      console.log(`📝 Form data captured - Username: "${username}", Password: "${password}"`);
+      
       const errorBox = document.getElementById('error');
       errorBox.textContent = '';
       if (!username || !password) {
