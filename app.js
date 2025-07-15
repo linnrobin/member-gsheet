@@ -27,8 +27,51 @@ function renderSettingsPage() {
 export const APP_VERSION = '1.0.35';
 import { renderAdminsPage, showAdmins } from './admin.js';
 
+// Initialize bcrypt library
+function initializeBcrypt() {
+  let checkCount = 0;
+  const maxChecks = 20; // Try for up to 6 seconds (20 * 300ms)
+  
+  const checkBcrypt = () => {
+    checkCount++;
+    
+    if (window.bcrypt) {
+      console.log('✅ bcrypt library loaded successfully');
+      try {
+        // Test bcrypt functionality
+        const testSalt = window.bcrypt.genSaltSync(1);
+        const testHash = window.bcrypt.hashSync('test', testSalt);
+        if (testHash) {
+          console.log('✅ bcrypt functionality verified');
+          return;
+        }
+      } catch (error) {
+        console.error('❌ bcrypt loaded but not functional:', error);
+      }
+    }
+    
+    if (checkCount < maxChecks) {
+      setTimeout(checkBcrypt, 300);
+    } else {
+      console.error('❌ bcrypt library failed to load after', maxChecks * 300, 'ms');
+      // Show a warning to the user
+      setTimeout(() => {
+        if (showToast) {
+          showToast('Warning: Password encryption library not loaded. Some features may not work. Please refresh the page.', 'warning');
+        }
+      }, 1000);
+    }
+  };
+  
+  // Start checking immediately, then at intervals
+  checkBcrypt();
+}
+
 // Ensure all DOM event assignments happen after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  // Check bcrypt library availability
+  initializeBcrypt();
+  
   // --- All DOM event assignments below ---
   if (document.getElementById('logout-btn')) {
     document.getElementById('logout-btn').onclick = () => {
@@ -169,7 +212,7 @@ import {
   openSidePanel,
   closeSidePanel,
   setUserHelpers
-} from './user.js?v=6';
+} from './user.js?v=7';
 
 import { validateUser } from './validation.js';
 

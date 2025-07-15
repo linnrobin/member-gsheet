@@ -369,14 +369,32 @@ export function openSidePanel(mode, row = [], index = '') {
     }
 
     try {
-      // Wait for bcrypt if not loaded
+      // Enhanced bcrypt availability check with multiple retry attempts
       if (!window.bcrypt) {
         formError.textContent = 'Loading encryption library...';
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Try multiple times with longer waits
+        for (let i = 0; i < 5; i++) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (window.bcrypt) break;
+          if (i === 2) formError.textContent = 'Still loading encryption library...';
+        }
+        
         if (!window.bcrypt) {
-          formError.textContent = 'Encryption library not available. Please refresh the page.';
+          formError.textContent = 'Encryption library failed to load. Please refresh the page and try again.';
           return;
         }
+      }
+
+      // Test bcrypt functionality before using it
+      try {
+        const testSalt = window.bcrypt.genSaltSync(1);
+        const testHash = window.bcrypt.hashSync('test', testSalt);
+        if (!testHash) throw new Error('bcrypt test failed');
+      } catch (testError) {
+        console.error('bcrypt test failed:', testError);
+        formError.textContent = 'Encryption library is not working properly. Please refresh the page.';
+        return;
       }
 
       const salt = window.bcrypt.genSaltSync(10);
@@ -505,25 +523,54 @@ function showConfirm(message) {
 }
 
 export function openChangePasswordModal(index, row) {
-  // Wait for bcrypt to load if not available
+  // Enhanced bcrypt availability check
   if (!window.bcrypt) {
-    console.log('bcrypt not loaded yet, waiting...');
-    setTimeout(() => {
+    console.log('bcrypt not loaded yet, retrying...');
+    
+    // Show user feedback immediately
+    if (showToast) {
+      showToast('Loading encryption library...', 'info');
+    }
+    
+    // Try multiple times with shorter intervals
+    let retryCount = 0;
+    const checkBcrypt = () => {
+      retryCount++;
       if (window.bcrypt) {
         openChangePasswordModal(index, row);
+        return;
+      }
+      
+      if (retryCount < 10) { // Try up to 10 times
+        setTimeout(checkBcrypt, 300); // Check every 300ms
       } else {
-        console.error('bcrypt library failed to load');
+        console.error('bcrypt library failed to load after multiple attempts');
         if (showToast) {
-          showToast('Password encryption library not available. Please refresh the page and try again.', 'danger');
+          showToast('Password encryption library failed to load. Please refresh the page and try again.', 'danger');
         }
       }
-    }, 1000);
+    };
+    
+    setTimeout(checkBcrypt, 300);
     return;
   }
 
   const newPwd = prompt('Enter new password for user: ' + (row[0] || ''));
   if (newPwd && newPwd.length >= 6) {
     try {
+      // Test bcrypt functionality before using it
+      try {
+        const testSalt = window.bcrypt.genSaltSync(1);
+        const testHash = window.bcrypt.hashSync('test', testSalt);
+        if (!testHash) throw new Error('bcrypt test failed');
+      } catch (testError) {
+        console.error('bcrypt test failed:', testError);
+        if (showToast) {
+          showToast('Encryption library is not working properly. Please refresh the page.', 'danger');
+        }
+        return;
+      }
+
       const salt = window.bcrypt.genSaltSync(10);
       const hashedPassword = window.bcrypt.hashSync(newPwd.trim(), salt);
     fetchUsers().then(users => {
