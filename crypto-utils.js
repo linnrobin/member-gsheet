@@ -58,16 +58,33 @@ export class SimpleCrypto {
   }
 
   static compareSync(password, hash) {
-    if (!hash || hash.length < 29) return false;
+    if (!hash || hash.length < 10) return false;
     
-    // Extract salt from hash (bcrypt format: $2a$rounds$salt+hash)
-    const parts = hash.split('$');
-    if (parts.length < 4) return false;
+    // Handle different hash formats
+    if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+      // Real bcrypt hash format - extract salt and compare
+      const parts = hash.split('$');
+      if (parts.length >= 4) {
+        // For bcrypt format: $2a$rounds$saltAndHash
+        // Extract salt (first 29 chars after $2a$rounds$)
+        const salt = hash.substring(0, 29);
+        const testHash = this.hashSync(password, salt);
+        return testHash === hash;
+      }
+    }
     
-    const salt = parts.slice(0, 4).join('$');
-    const testHash = this.hashSync(password, salt);
+    // SimpleCrypto hash format - extract salt and compare
+    if (hash.includes('$')) {
+      const parts = hash.split('$');
+      if (parts.length >= 4) {
+        const salt = parts.slice(0, 4).join('$');
+        const testHash = this.hashSync(password, salt);
+        return testHash === hash;
+      }
+    }
     
-    return testHash === hash;
+    // Legacy format or direct comparison
+    return password === hash;
   }
 }
 

@@ -24,7 +24,7 @@ function renderSettingsPage() {
 }
 //app.js
 // Versioning
-export const APP_VERSION = '1.0.39';
+export const APP_VERSION = '1.0.40';
 import { renderAdminsPage, showAdmins } from './admin.js';
 import { initCryptoUtils } from './crypto-utils.js';
 
@@ -149,9 +149,56 @@ document.addEventListener('DOMContentLoaded', () => {
           range: CONFIG.ADMINS_RANGE,
         });
         const rows = res.result.values || [];
-        const match = rows.find(row =>
-          row[1]?.trim() === username && row[2]?.trim() === password
-        );
+        
+        // Find user and validate password using bcrypt comparison
+        let match = null;
+        for (const row of rows) {
+          if (row[1]?.trim() === username) {
+            const storedPassword = row[2]?.trim();
+            
+            // Ensure bcrypt is available
+            if (!window.bcrypt) {
+              // If bcrypt not ready, try to initialize it
+              console.log('bcrypt not ready during login, initializing...');
+              const { initCryptoUtils } = await import('./crypto-utils.js');
+              initCryptoUtils();
+            }
+            
+            // Check if password is hashed (starts with $2a$ or similar) or plain text
+            if (storedPassword && storedPassword.startsWith('$2')) {
+              // Hashed password - use bcrypt comparison
+              if (window.bcrypt && window.bcrypt.compareSync(password, storedPassword)) {
+                match = row;
+                break;
+              }
+            } else {
+              // Plain text password (legacy) - direct comparison
+              if (storedPassword === password) {
+                match = row;
+                // Update to hashed password
+                console.log('Converting plain text password to hashed for user:', username);
+                if (window.bcrypt) {
+                  try {
+                    const salt = window.bcrypt.genSaltSync(10);
+                    const hashedPassword = window.bcrypt.hashSync(password, salt);
+                    // Update the password in the sheet
+                    await updateUser(rows.indexOf(row), {
+                      username: row[1],
+                      password: hashedPassword,
+                      role: row[3] || 'user',
+                      created_at: row[4] || new Date().toISOString()
+                    });
+                    console.log('Password converted to hash for user:', username);
+                  } catch (updateError) {
+                    console.warn('Failed to update password hash:', updateError);
+                  }
+                }
+                break;
+              }
+            }
+          }
+        }
+        
         if (match) {
           const currentGoogleToken = gapi.client.getToken()?.access_token;
           if (!currentGoogleToken) {
